@@ -99,7 +99,7 @@ dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_event = false:suggestion
 dotnet_style_readonly_field = true:warning
-dotnet_style_require_accessibility_modifiers = always:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 
 # --- Analyzers --------------------------------------------------------------
 dotnet_diagnostic.CA1014.severity = none

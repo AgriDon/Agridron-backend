@@ -38,18 +38,24 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 {
     var connectionStringTemplate = builder.Configuration.GetConnectionString("DefaultConnection");
     if (string.IsNullOrWhiteSpace(connectionStringTemplate))
+    {
         throw new InvalidOperationException("Database connection string is not set in the configuration.");
+    }
 
     var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
     if (string.IsNullOrWhiteSpace(connectionString))
+    {
         throw new InvalidOperationException("Database connection string is not set in the configuration.");
+    }
 
     options.UseMySQL(connectionString)
         .UseLoggerFactory(serviceProvider.GetRequiredService<ILoggerFactory>())
         .EnableDetailedErrors();
 
     if (builder.Environment.IsDevelopment())
+    {
         options.EnableSensitiveDataLogging();
+    }
 });
 
 // Localization Configuration

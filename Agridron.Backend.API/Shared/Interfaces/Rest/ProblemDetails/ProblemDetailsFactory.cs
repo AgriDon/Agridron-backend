@@ -27,7 +27,8 @@ public class ProblemDetailsFactory
         int statusCode,
         Enum? errorEnum,
         string detailMessage)
-    {        var problemDetails = _aspNetCoreProblemDetailsFactory.CreateProblemDetails(
+    {
+        var problemDetails = _aspNetCoreProblemDetailsFactory.CreateProblemDetails(
             controller.HttpContext,
             statusCode,
             errorEnum != null ? _errorLocalizer[$"{errorEnum}"] : _commonLocalizer["GenericError"],

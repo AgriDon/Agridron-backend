@@ -18,8 +18,16 @@ public abstract class ValueObject : IEquatable<ValueObject>
     /// <inheritdoc />
     public bool Equals(ValueObject? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
         return GetType() == other.GetType()
                && GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
@@ -34,7 +42,11 @@ public abstract class ValueObject : IEquatable<ValueObject>
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        foreach (var component in GetEqualityComponents()) hash.Add(component);
+        foreach (var component in GetEqualityComponents())
+        {
+            hash.Add(component);
+        }
+
         return hash.ToHashCode();
     }
 

@@ -67,7 +67,9 @@ public static class ErrorProblemDetailsMapper
         problemDetails.Extensions["code"] = error.Code;
 
         if (!string.IsNullOrWhiteSpace(error.Details))
+        {
             problemDetails.Extensions["details"] = error.Details;
+        }
 
         return problemDetails;
     }

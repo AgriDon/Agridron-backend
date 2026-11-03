@@ -35,8 +35,16 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
     /// <inheritdoc />
     public bool Equals(Entity<TId>? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
         return GetType() == other.GetType()
                && EqualityComparer<TId>.Default.Equals(Id, other.Id);
     }

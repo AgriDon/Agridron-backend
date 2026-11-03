@@ -59,7 +59,10 @@ public sealed class PagedResult<T>
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(parameters);
-        if (totalCount < 0) throw new ArgumentOutOfRangeException(nameof(totalCount), "Total count cannot be negative.");
+        if (totalCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalCount), "Total count cannot be negative.");
+        }
 
         return new PagedResult<T>(items, parameters.Page, parameters.Size, totalCount);
     }

@@ -45,7 +45,10 @@ public sealed record PaginationParameters
     /// <returns>The validated parameters.</returns>
     public static PaginationParameters Create(int? page, int? size)
     {
-        if (page is null && size is null) return Unpaged;
+        if (page is null && size is null)
+        {
+            return Unpaged;
+        }
 
         var safePage = Math.Max(0, page ?? 0);
         var safeSize = Math.Clamp(size ?? DefaultSize, 1, MaxSize);

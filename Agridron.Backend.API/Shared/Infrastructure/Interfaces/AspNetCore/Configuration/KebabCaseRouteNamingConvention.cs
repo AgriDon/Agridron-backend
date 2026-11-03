@@ -15,10 +15,14 @@ public class KebabCaseRouteNamingConvention : IControllerModelConvention
     public void Apply(ControllerModel controller)
     {
         foreach (var selector in controller.Selectors)
+        {
             selector.AttributeRouteModel = ReplaceControllerTemplate(selector, controller.ControllerName);
+        }
 
         foreach (var selector in controller.Actions.SelectMany(a => a.Selectors))
+        {
             selector.AttributeRouteModel = ReplaceControllerTemplate(selector, controller.ControllerName);
+        }
     }
 
     /// <summary>
