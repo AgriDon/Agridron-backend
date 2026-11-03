@@ -31,7 +31,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
     }
 
     /// <inheritdoc />
-    public async Task<TEntity?> FindByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<TEntity?> FindByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await Context.Set<TEntity>().FindAsync(new object[] { id }, cancellationToken);
     }
