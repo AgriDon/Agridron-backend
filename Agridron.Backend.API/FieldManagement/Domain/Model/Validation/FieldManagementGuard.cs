@@ -17,10 +17,16 @@ internal static class FieldManagementGuard
     /// </summary>
     public static string RequiredText(string? value, Error missing, int maxLength, Error tooLong)
     {
-        if (string.IsNullOrWhiteSpace(value)) throw new DomainException(missing);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new DomainException(missing);
+        }
 
         var trimmed = value.Trim();
-        if (trimmed.Length > maxLength) throw new DomainException(tooLong);
+        if (trimmed.Length > maxLength)
+        {
+            throw new DomainException(tooLong);
+        }
 
         return trimmed;
     }
@@ -30,15 +36,24 @@ internal static class FieldManagementGuard
     /// </summary>
     public static string? OptionalUrl(string? value, int maxLength, Error invalid)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
 
         var trimmed = value.Trim();
-        if (trimmed.Length > maxLength) throw new DomainException(invalid);
+        if (trimmed.Length > maxLength)
+        {
+            throw new DomainException(invalid);
+        }
 
         var isValid = Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
                       && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 
-        if (!isValid) throw new DomainException(invalid);
+        if (!isValid)
+        {
+            throw new DomainException(invalid);
+        }
 
         return trimmed;
     }
@@ -48,7 +63,11 @@ internal static class FieldManagementGuard
     /// </summary>
     public static long RequiredId(long value, Error invalid)
     {
-        if (value <= 0) throw new DomainException(invalid);
+        if (value <= 0)
+        {
+            throw new DomainException(invalid);
+        }
+
         return value;
     }
 }

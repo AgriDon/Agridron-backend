@@ -19,7 +19,11 @@ public readonly record struct CropId(long Value)
     /// <exception cref="ArgumentOutOfRangeException">When the value is not positive.</exception>
     public static CropId From(long value)
     {
-        if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value), "A crop id must be greater than zero.");
+        if (value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "A crop id must be greater than zero.");
+        }
+
         return new CropId(value);
     }
 

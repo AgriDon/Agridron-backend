@@ -20,7 +20,9 @@ public readonly record struct FumigationAreaId(long Value)
     public static FumigationAreaId From(long value)
     {
         if (value <= 0)
+        {
             throw new ArgumentOutOfRangeException(nameof(value), "A fumigation area id must be greater than zero.");
+        }
 
         return new FumigationAreaId(value);
     }
