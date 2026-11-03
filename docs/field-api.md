@@ -140,7 +140,7 @@ Reglas: `name` obligatorio (1–80), `variety` obligatorio (1–80). La combinac
 {
   "id": 1,
   "parcelId": 1,
-  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-76.135,-14.065],[-76.135,-14.065],[-76.135,-14.065],[-76.135,-14.065]]]}",
+  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-76.135,-14.065],[-76.133,-14.065],[-76.133,-14.063],[-76.135,-14.063],[-76.135,-14.065]]]}",
   "area": 3.2
 }
 ```

@@ -114,5 +114,7 @@ dotnet ef database update --project Agridron.Backend.API
 ## Seed
 
 `FieldManagementSeeder` inserta los datos del mock de forma idempotente (solo si la tabla está
-vacía): 6 fincas, 4 cultivos, 5 parcelas y 2 áreas de fumigación, con las mismas coordenadas
-y URLs de imagen que usa el frontend en Sprint 2.
+vacía): 6 fincas, 4 cultivos, 5 parcelas y 2 áreas de fumigación, con las mismas URLs de imagen
+que usa el frontend en Sprint 2. Las coordenadas del mock se normalizan a polígonos válidos
+y cerrados, porque una de las áreas de fumigación de ejemplo es degenerada (cuatro puntos
+idénticos) y no pasaría la validación del dominio.
