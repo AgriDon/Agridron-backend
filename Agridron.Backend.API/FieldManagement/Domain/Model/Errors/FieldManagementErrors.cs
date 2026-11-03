@@ -90,6 +90,12 @@ public static class FieldManagementErrors
     public static readonly Error ParcelAreaOutOfRange =
         Error.Validation("ParcelAreaOutOfRange", "The parcel area must be greater than zero and at most 100000 hectares.");
 
+    public static readonly Error ParcelFarmInvalid =
+        Error.Validation("ParcelFarmInvalid", "The parcel farm identifier must be greater than zero.");
+
+    public static readonly Error ParcelCropInvalid =
+        Error.Validation("ParcelCropInvalid", "The parcel crop identifier must be greater than zero.");
+
     public static Error ParcelNotFound(long id)
     {
         return Error.NotFound("ParcelNotFound", $"Parcel with id {id} was not found.");
@@ -113,6 +119,9 @@ public static class FieldManagementErrors
 
     public static readonly Error FumigationAreaHasNoArea =
         Error.Validation("FumigationAreaHasNoArea", "The fumigation area must be greater than zero.");
+
+    public static readonly Error FumigationAreaParcelInvalid =
+        Error.Validation("FumigationAreaParcelInvalid", "The fumigation area parcel identifier must be greater than zero.");
 
     public static Error FumigationAreaNotFound(long id)
     {
