@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Agridron.Backend.API.Tests/Agridron.Backend.API.Tests.csproj" />
+  </Folder>
   <Project Path="Agridron.Backend.API/Agridron.Backend.API.csproj" />
 </Solution>
