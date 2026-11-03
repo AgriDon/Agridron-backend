@@ -2,6 +2,7 @@ using Agridron.Backend.API.Shared.Domain.Repositories;
 using Agridron.Backend.API.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Agridron.Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration;
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Agridron.Backend.API.Shared.Infrastructure.Pipeline.Middleware.Extensions;
 using Agridron.Backend.API.Shared.Interfaces.Rest.ProblemDetails;
@@ -50,7 +51,10 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
     options.UseMySQL(connectionString)
         .UseLoggerFactory(serviceProvider.GetRequiredService<ILoggerFactory>())
-        .EnableDetailedErrors();
+        .EnableDetailedErrors()
+        .AddInterceptors(
+            serviceProvider.GetRequiredService<AuditableEntityInterceptor>(),
+            serviceProvider.GetRequiredService<DomainEventInterceptor>());
 
     if (builder.Environment.IsDevelopment())
     {
@@ -65,6 +69,10 @@ builder.Services.AddSingleton<IStringLocalizer<CommonMessages>, StringLocalizer<
 
 // Register the custom ProblemDetailsFactory
 builder.Services.AddSingleton<ProblemDetailsFactory>();
+
+// Register EF Core interceptors (scoped so they share the mediator per request)
+builder.Services.AddScoped<AuditableEntityInterceptor>();
+builder.Services.AddScoped<DomainEventInterceptor>();
 
 // Swagger / OpenAPI Configuration
 builder.Services.AddEndpointsApiExplorer();
@@ -82,6 +90,16 @@ builder.Services.AddSwaggerGen(options =>
 
 // Dependency Injection - Shared Bounded Context
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Dependency Injection - Field Management Bounded Context
+builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositories.IFarmRepository,
+    Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.FarmRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositories.ICropRepository,
+    Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.CropRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositories.IParcelRepository,
+    Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.ParcelRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositories.IFumigationAreaRepository,
+    Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.FumigationAreaRepository>();
 
 // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
