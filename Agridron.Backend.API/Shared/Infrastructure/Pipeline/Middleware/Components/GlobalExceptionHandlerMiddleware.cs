@@ -1,4 +1,3 @@
-using System.Net.Mime;
 using System.Text.Json;
 using Agridron.Backend.API.Shared.Resources;
 using Agridron.Backend.API.Shared.Resources.Errors;
@@ -42,16 +41,18 @@ public class GlobalExceptionHandlerMiddleware(
 
     private async Task HandleOperationCanceledExceptionAsync(HttpContext context, OperationCanceledException exception)
     {
-        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = StatusCodes.Status409Conflict;
 
         var problemDetails = new ProblemDetails
         {
+            Type = "https://httpstatuses.com/409",
             Status = StatusCodes.Status409Conflict,
             Title = _errorLocalizer["OperationCancelled"],
             Detail = _errorLocalizer["OperationCancelled"],
             Instance = context.Request.Path
         };
+        problemDetails.Extensions["code"] = "OPERATION_CANCELLED";
 
         var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonSerializer.Serialize(problemDetails, jsonOptions);
@@ -61,16 +62,18 @@ public class GlobalExceptionHandlerMiddleware(
 
     private async Task HandleGenericExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
         var problemDetails = new ProblemDetails
         {
+            Type = "https://httpstatuses.com/500",
             Status = StatusCodes.Status500InternalServerError,
             Title = _commonLocalizer["InternalServerError"],
             Detail = _errorLocalizer["GenericError"],
             Instance = context.Request.Path
         };
+        problemDetails.Extensions["code"] = "UNEXPECTED_ERROR";
 
         var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonSerializer.Serialize(problemDetails, jsonOptions);

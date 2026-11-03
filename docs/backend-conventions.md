@@ -149,8 +149,10 @@ Interfaces ──▶ Application ──▶ Domain
 - Los comandos se nombran `CreateFarmCommand`, `UpdateParcelCommand`, `DeleteCropCommand`.
 - Las consultas se nombran `GetFarmByIdQuery`, `GetAllParcelsQuery`.
 - Los handlers devuelven `Result<T>` o `Result`.
-- Los errores esperados se modelan con un `enum` de errores por bounded context
-  (`FieldManagementError`), nunca con strings mágicos.
+- Los errores esperados se modelan con el record `Error` (`Code`, `Message`, `Type`, `Details`).
+  El `Code` es único dentro del bounded context; el `Type` (`Validation`, `NotFound`, `Conflict`,
+  `BusinessRule`, `Unexpected`) determina el código HTTP. Nunca se usan strings mágicos ni
+  excepciones para flujos esperados.
 - La transacción se confirma con `IUnitOfWork.CompleteAsync()` una sola vez por caso de uso.
 - Las consultas **no** pasan por el agregado: leen proyecciones/DTOs directamente.
 
@@ -228,7 +230,16 @@ Todos los errores usan **RFC 7807 Problem Details** (`application/problem+json`)
 }
 ```
 
-La extensión `code` viene del catálogo de errores del bounded context.
+La extensión `code` viene del catálogo de errores del bounded context y el status se deriva
+del `ErrorType`:
+
+| `ErrorType` | HTTP |
+|---|---|
+| `Validation` | `400 Bad Request` |
+| `NotFound` | `404 Not Found` |
+| `Conflict` | `409 Conflict` |
+| `BusinessRule` | `422 Unprocessable Entity` |
+| `Unexpected` | `500 Internal Server Error` |
 
 ### Paginación
 

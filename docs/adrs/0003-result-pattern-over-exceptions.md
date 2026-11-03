@@ -19,9 +19,9 @@ esperados y no deberían costar una excepción ni un `500`.
 
 ## Decisión
 
-Los casos de uso devuelven `Result<T>` / `Result` con un valor de un `enum` de errores por
-bounded context. Las excepciones se reservan para fallos de infraestructura o errores de
-programación, que el middleware global traduce a Problem Details.
+Los casos de uso devuelven `Result<T>` / `Result` con un record `Error` que transporta un `Code`,
+un `Message`, un `ErrorType` y detalles opcionales. Las excepciones se reservan para fallos de
+infraestructura o errores de programación, que el middleware global traduce a Problem Details.
 
 ## Consecuencias
 

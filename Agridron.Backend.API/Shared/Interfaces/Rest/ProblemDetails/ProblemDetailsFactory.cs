@@ -1,3 +1,4 @@
+using Agridron.Backend.API.Shared.Domain.Model;
 using Agridron.Backend.API.Shared.Resources;
 using Agridron.Backend.API.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
@@ -26,8 +27,7 @@ public class ProblemDetailsFactory
         int statusCode,
         Enum? errorEnum,
         string detailMessage)
-    {
-        var problemDetails = _aspNetCoreProblemDetailsFactory.CreateProblemDetails(
+    {        var problemDetails = _aspNetCoreProblemDetailsFactory.CreateProblemDetails(
             controller.HttpContext,
             statusCode,
             errorEnum != null ? _errorLocalizer[$"{errorEnum}"] : _commonLocalizer["GenericError"],
@@ -70,5 +70,20 @@ public class ProblemDetailsFactory
             instance: controller.HttpContext.Request.Path
         );
         return controller.StatusCode(statusCode, problemDetails);
+    }
+
+    /// <summary>
+    ///     Builds a Problem Details response from a domain error.
+    /// </summary>
+    /// <param name="controller">The controller handling the request.</param>
+    /// <param name="error">The domain error to translate.</param>
+    /// <returns>An <see cref="IActionResult" /> with the mapped status code and Problem Details body.</returns>
+    public IActionResult CreateProblemDetails(ControllerBase controller, Error error)
+    {
+        ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(error);
+
+        var problemDetails = error.ToProblemDetails(controller.HttpContext);
+        return controller.StatusCode(problemDetails.Status!.Value, problemDetails);
     }
 }
