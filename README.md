@@ -39,7 +39,7 @@ docker compose up -d mysql
 # Restaurar dependencias
 dotnet restore Agridron.Backend.slnx
 
-# Aplicar migraciones
+# Aplicar migraciones (disponibles a partir de la Fase 3)
 dotnet ef database update --project Agridron.Backend.API
 
 # Aplicación
