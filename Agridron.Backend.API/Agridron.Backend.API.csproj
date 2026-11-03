@@ -23,6 +23,9 @@
         <!-- OpenAPI documentation related packages -->
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.0"/>
+        <!-- Security override: Swashbuckle 10.2.0 pulls Microsoft.OpenApi 2.4.1,
+             affected by GHSA-v5pm-xwqc-g5wc. 2.7.5 is the first patched release. -->
+        <PackageReference Include="Microsoft.OpenApi" Version="2.7.5"/>
         <!-- Mediator pattern related packages -->
         <PackageReference Include="Cortex.Mediator" Version="3.1.2"/>
     </ItemGroup>
