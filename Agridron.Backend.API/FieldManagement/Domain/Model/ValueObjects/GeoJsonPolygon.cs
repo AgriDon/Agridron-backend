@@ -121,10 +121,21 @@ public sealed class GeoJsonPolygon : ValueObject
                             "Each position must be an array with longitude and latitude."));
                 }
 
-                if (!position[0].TryGetDouble(out var longitude) || !position[1].TryGetDouble(out var latitude))
+                double longitude;
+                double latitude;
+
+                try
+                {
+                    if (!position[0].TryGetDouble(out longitude) || !position[1].TryGetDouble(out latitude))
+                    {
+                        throw new DomainException(
+                            FieldManagementErrors.PolygonGeoJsonInvalid("Coordinates must be numbers."));
+                    }
+                }
+                catch (InvalidOperationException exception)
                 {
                     throw new DomainException(
-                        FieldManagementErrors.PolygonGeoJsonInvalid("Coordinates must be numbers."));
+                        FieldManagementErrors.PolygonGeoJsonInvalid("Coordinates must be numbers."), exception);
                 }
 
                 if (longitude is < -180 or > 180 || latitude is < -90 or > 90)

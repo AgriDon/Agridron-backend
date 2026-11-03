@@ -21,6 +21,16 @@ public sealed class DomainException : Exception
         Error = error ?? throw new ArgumentNullException(nameof(error));
     }
 
+    /// <summary>
+    ///     Creates a domain exception from a domain error and an inner exception.
+    /// </summary>
+    /// <param name="error">The error that describes the violated rule.</param>
+    /// <param name="innerException">The exception that caused this exception.</param>
+    public DomainException(Error error, Exception innerException) : base(error?.Message, innerException)
+    {
+        Error = error ?? throw new ArgumentNullException(nameof(error));
+    }
+
     /// <summary>The domain error that describes the violated rule.</summary>
     public Error Error { get; }
 }
