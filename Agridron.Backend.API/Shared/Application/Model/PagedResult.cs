@@ -26,8 +26,8 @@ public sealed class PagedResult<T>
     /// <summary>Total number of records matching the query.</summary>
     public long TotalCount { get; }
 
-    /// <summary>Total number of pages. One when the query was unpaged.</summary>
-    public int TotalPages => Size <= 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)Size);
+    /// <summary>Total number of pages. Zero when there are no records.</summary>
+    public int TotalPages => TotalCount == 0 ? 0 : Size <= 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)Size);
 
     /// <summary>Whether another page exists after this one.</summary>
     public bool HasNextPage => Page + 1 < TotalPages;
