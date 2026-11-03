@@ -26,7 +26,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
 
-        // Bounded context entity configurations will be applied here via extensions
+        // Every bounded context declares its mappings as IEntityTypeConfiguration<T>, so the
+        // context does not need to be edited when a new bounded context is added.
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();
