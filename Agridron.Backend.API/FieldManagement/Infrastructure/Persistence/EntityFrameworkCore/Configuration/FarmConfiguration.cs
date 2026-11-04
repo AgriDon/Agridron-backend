@@ -2,6 +2,7 @@ using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
 using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -10,6 +11,9 @@ namespace Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.Entity
 /// </summary>
 internal sealed class FarmConfiguration : IEntityTypeConfiguration<Farm>
 {
+    private static readonly ValueConverter<FarmId, long> FarmIdConverter =
+        new(v => v.Value, v => new FarmId(v));
+
     public void Configure(EntityTypeBuilder<Farm> builder)
     {
         builder.ToTable("farms");
@@ -18,6 +22,7 @@ internal sealed class FarmConfiguration : IEntityTypeConfiguration<Farm>
 
         builder.Property(f => f.Id)
             .HasColumnName("id")
+            .HasConversion(FarmIdConverter)
             .ValueGeneratedOnAdd();
 
         builder.Property(f => f.Name)
