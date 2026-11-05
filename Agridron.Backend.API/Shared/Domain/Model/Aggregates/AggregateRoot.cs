@@ -12,7 +12,7 @@ namespace Agridron.Backend.API.Shared.Domain.Model.Aggregates;
 ///     transaction has been committed.
 /// </remarks>
 /// <typeparam name="TId">The type of the aggregate identifier.</typeparam>
-public abstract class AggregateRoot<TId> : Entity<TId>
+public abstract class AggregateRoot<TId> : Entity<TId>, IHasDomainEvents
     where TId : notnull
 {
     private readonly List<IEvent> _domainEvents = [];

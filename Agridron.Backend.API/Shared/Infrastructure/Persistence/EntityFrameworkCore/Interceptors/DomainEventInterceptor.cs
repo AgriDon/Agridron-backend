@@ -35,9 +35,10 @@ internal sealed class DomainEventInterceptor : SaveChangesInterceptor
         }
 
         var aggregatesWithEvents = context.ChangeTracker
-            .Entries<AggregateRoot<object>>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
+            .Entries()
+            .Select(entry => entry.Entity)
+            .OfType<IHasDomainEvents>()
+            .Where(aggregate => aggregate.DomainEvents.Count > 0)
             .ToList();
 
         if (aggregatesWithEvents.Count == 0)
@@ -54,33 +55,32 @@ internal sealed class DomainEventInterceptor : SaveChangesInterceptor
 
         var saveResult = await base.SavingChangesAsync(eventData, result, cancellationToken);
 
-        if (saveResult.Result > 0)
+        // Creation events are raised after the insert, when the database identity is known, so a
+        // second SaveChanges may have nothing to persist but still has events to publish.
+        foreach (var domainEvent in eventsToPublish)
         {
-            foreach (var domainEvent in eventsToPublish)
+            var stopwatch = Stopwatch.StartNew();
+            try
             {
-                var stopwatch = Stopwatch.StartNew();
-                try
-                {
-                    await _mediator.PublishAsync(domainEvent, cancellationToken);
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogError(exception,
-                        "Failed to publish domain event {EventType}. The transaction has already committed.",
-                        domainEvent.GetType().Name);
-                }
-                finally
-                {
-                    stopwatch.Stop();
-                    _logger.LogDebug("Published domain event {EventType} in {ElapsedMs} ms",
-                        domainEvent.GetType().Name, stopwatch.ElapsedMilliseconds);
-                }
+                await _mediator.PublishAsync(domainEvent, cancellationToken);
             }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception,
+                    "Failed to publish domain event {EventType}. The transaction has already committed.",
+                    domainEvent.GetType().Name);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _logger.LogDebug("Published domain event {EventType} in {ElapsedMs} ms",
+                    domainEvent.GetType().Name, stopwatch.ElapsedMilliseconds);
+            }
+        }
 
-            foreach (var aggregate in aggregatesWithEvents)
-            {
-                aggregate.ClearDomainEvents();
-            }
+        foreach (var aggregate in aggregatesWithEvents)
+        {
+            aggregate.ClearDomainEvents();
         }
 
         return saveResult;
