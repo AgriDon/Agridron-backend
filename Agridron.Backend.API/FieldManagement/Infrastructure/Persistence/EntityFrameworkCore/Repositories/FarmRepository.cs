@@ -35,7 +35,8 @@ internal sealed class FarmRepository : BaseRepository<Farm>, IFarmRepository
 
         if (excludedId.HasValue)
         {
-            query = query.Where(f => f.Id.Value != excludedId.Value);
+            var excludedFarmId = new FarmId(excludedId.Value);
+            query = query.Where(f => f.Id != excludedFarmId);
         }
 
         return await query.AnyAsync(cancellationToken);

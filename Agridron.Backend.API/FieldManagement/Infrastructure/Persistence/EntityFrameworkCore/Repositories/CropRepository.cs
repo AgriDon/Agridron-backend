@@ -1,4 +1,5 @@
 using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FieldManagement.Domain.Repositories;
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
@@ -26,7 +27,8 @@ internal sealed class CropRepository : BaseRepository<Crop>, ICropRepository
 
         if (excludedId.HasValue)
         {
-            query = query.Where(c => c.Id.Value != excludedId.Value);
+            var excludedCropId = new CropId(excludedId.Value);
+            query = query.Where(c => c.Id != excludedCropId);
         }
 
         return await query.AnyAsync(cancellationToken);
