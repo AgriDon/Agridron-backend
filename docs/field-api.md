@@ -66,7 +66,7 @@ cultivo está asignado a alguna parcela.
 | `GET` | `/parcels/{id}` | Obtiene una parcela | `200` |
 | `POST` | `/parcels` | Registra una parcela | `201` + `Location` |
 | `PUT` | `/parcels/{id}` | Reemplaza los datos de una parcela | `200` |
-| `DELETE` | `/parcels/{id}` | Elimina una parcela sin áreas de fumigación | `204` |
+| `DELETE` | `/parcels/{id}` | Inactiva una parcela (soft-delete) sin áreas de fumigación | `204` |
 
 `ParcelResource`:
 
@@ -78,15 +78,17 @@ cultivo está asignado a alguna parcela.
   "name": "Lote Norte",
   "areaHectares": 12.50,
   "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.49,-0.2],[-78.49,-0.19],[-78.5,-0.19],[-78.5,-0.2]]]}",
+  "phenologicalStage": "Floracion",
+  "isActive": true,
   "imageUrl": null
 }
 ```
 
-`POST`/`PUT` reciben `farmId`, `cropId`, `name`, `geometry` e `imageUrl` (opcional). El `farmId`
+`POST`/`PUT` reciben `farmId`, `cropId`, `name`, `geometry`, `phenologicalStage` (opcional, máx. 60 caracteres) e `imageUrl` (opcional). El `farmId`
 y el `cropId` deben existir (`404` con `FarmNotFound` / `CropNotFound`). `geometry` debe ser un
 `Polygon` cerrado con al menos cuatro posiciones y coordenadas válidas; si no, se devuelve
 `400` con el código de validación correspondiente. El área resultante debe ser mayor que cero y
-como máximo 100 000 ha (`ParcelAreaOutOfRange`). `DELETE` responde `409 Conflict` con
+como máximo 100 000 ha (`ParcelAreaOutOfRange`). `DELETE` desactiva lógicamente la parcela (`isActive = false`) manteniendo el histórico de misiones operativas, y responde `409 Conflict` con
 `ParcelHasFumigationAreas` si la parcela todavía tiene áreas de fumigación.
 
 ## Áreas de fumigación — `/api/v1/fumigation-areas`
@@ -188,3 +190,4 @@ curl -X POST http://localhost:5000/api/v1/fumigation-areas \
     "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.495,-0.2],[-78.495,-0.195],[-78.5,-0.195],[-78.5,-0.2]]]}"
   }'
 ```
+
