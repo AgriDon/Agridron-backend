@@ -9,6 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- Expose internal persistence types to the test project -->
+        <InternalsVisibleTo Include="Agridron.Backend.API.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- EntityFrameworkCore Database Persistence related packages -->
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8"/>
