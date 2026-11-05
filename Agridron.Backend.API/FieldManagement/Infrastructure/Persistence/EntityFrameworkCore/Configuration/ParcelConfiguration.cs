@@ -61,7 +61,7 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
             .HasColumnName("area_hectares")
             .HasColumnType("DECIMAL(10,2)")
             .HasComputedColumnSql(
-                "ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000",
+                "ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000",
                 stored: true);
 
         builder.Property(p => p.ImageUrl)

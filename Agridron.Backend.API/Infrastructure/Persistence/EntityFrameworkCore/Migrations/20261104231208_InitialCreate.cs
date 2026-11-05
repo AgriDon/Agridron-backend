@@ -54,7 +54,7 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     parcel_id = table.Column<long>(type: "bigint", nullable: false),
                     geometry_json = table.Column<string>(type: "LONGTEXT", nullable: false),
-                    area_hectares = table.Column<decimal>(type: "DECIMAL(10,2)", nullable: false, computedColumnSql: "ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000", stored: true)
+                    area_hectares = table.Column<decimal>(type: "DECIMAL(10,2)", nullable: false, computedColumnSql: "ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000", stored: true)
                 },
                 constraints: table =>
                 {
@@ -72,7 +72,7 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                     crop_id = table.Column<long>(type: "bigint", nullable: false),
                     name = table.Column<string>(type: "varchar(120)", maxLength: 120, nullable: false),
                     geometry_json = table.Column<string>(type: "LONGTEXT", nullable: false),
-                    area_hectares = table.Column<decimal>(type: "DECIMAL(10,2)", nullable: false, computedColumnSql: "ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000", stored: true),
+                    area_hectares = table.Column<decimal>(type: "DECIMAL(10,2)", nullable: false, computedColumnSql: "ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000", stored: true),
                     image_url = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
@@ -114,13 +114,13 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
 
             // Native spatial columns generated from the GeoJSON strings by MySQL.
             migrationBuilder.Sql(
-                "ALTER TABLE `parcels` ADD COLUMN `geometry_native` GEOMETRY GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`, 4326)) STORED NOT NULL");
+                "ALTER TABLE `parcels` ADD COLUMN `geometry_native` GEOMETRY GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`)) STORED NOT NULL");
 
             migrationBuilder.Sql(
                 "CREATE SPATIAL INDEX `sx_parcels_geometry` ON `parcels` (`geometry_native`)");
 
             migrationBuilder.Sql(
-                "ALTER TABLE `fumigation_areas` ADD COLUMN `geometry_native` GEOMETRY GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`, 4326)) STORED NOT NULL");
+                "ALTER TABLE `fumigation_areas` ADD COLUMN `geometry_native` GEOMETRY GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`)) STORED NOT NULL");
 
             migrationBuilder.Sql(
                 "CREATE SPATIAL INDEX `sx_fumigation_areas_geometry` ON `fumigation_areas` (`geometry_native`)");

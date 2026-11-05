@@ -48,7 +48,7 @@ internal sealed class FumigationAreaConfiguration : IEntityTypeConfiguration<Fum
             .HasColumnName("area_hectares")
             .HasColumnType("DECIMAL(10,2)")
             .HasComputedColumnSql(
-                "ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000",
+                "ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000",
                 stored: true);
 
         builder.HasIndex(f => f.ParcelId)

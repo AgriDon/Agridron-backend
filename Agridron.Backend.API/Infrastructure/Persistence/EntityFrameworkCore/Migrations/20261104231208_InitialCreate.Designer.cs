@@ -101,7 +101,7 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("DECIMAL(10,2)")
                         .HasColumnName("area_hectares")
-                        .HasComputedColumnSql("ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000", true);
+                        .HasComputedColumnSql("ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000", true);
 
                     b.Property<string>("Geometry")
                         .IsRequired()
@@ -132,7 +132,7 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("DECIMAL(10,2)")
                         .HasColumnName("area_hectares")
-                        .HasComputedColumnSql("ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000", true);
+                        .HasComputedColumnSql("ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000", true);
 
                     b.Property<long>("CropId")
                         .HasColumnType("bigint")
