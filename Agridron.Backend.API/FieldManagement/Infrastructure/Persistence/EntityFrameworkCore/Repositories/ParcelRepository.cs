@@ -10,35 +10,49 @@ namespace Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.Entity
 /// <summary>
 ///     Entity Framework Core implementation of <see cref="IParcelRepository" />.
 /// </summary>
-internal sealed class ParcelRepository : BaseRepository<Parcel>, IParcelRepository
+internal sealed class ParcelRepository(AppDbContext context) : BaseRepository<Parcel>(context), IParcelRepository
 {
-    public ParcelRepository(AppDbContext context) : base(context)
-    {
-    }
-
     public async Task<IReadOnlyList<Parcel>> ListByFarmIdAsync(
         FarmId farmId,
+        bool onlyActive = true,
         CancellationToken cancellationToken = default)
     {
-        return await Context.Set<Parcel>()
-            .Where(p => p.FarmId == farmId)
+        var query = Context.Set<Parcel>().Where(p => p.FarmId == farmId);
+        if (onlyActive)
+        {
+            query = query.Where(p => p.IsActive);
+        }
+
+        return await query
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<int> CountByFarmIdAsync(
         FarmId farmId,
+        bool onlyActive = true,
         CancellationToken cancellationToken = default)
     {
-        return await Context.Set<Parcel>()
-            .CountAsync(p => p.FarmId == farmId, cancellationToken);
+        var query = Context.Set<Parcel>().Where(p => p.FarmId == farmId);
+        if (onlyActive)
+        {
+            query = query.Where(p => p.IsActive);
+        }
+
+        return await query.CountAsync(cancellationToken);
     }
 
     public async Task<int> CountByCropIdAsync(
         CropId cropId,
+        bool onlyActive = true,
         CancellationToken cancellationToken = default)
     {
-        return await Context.Set<Parcel>()
-            .CountAsync(p => p.CropId == cropId, cancellationToken);
+        var query = Context.Set<Parcel>().Where(p => p.CropId == cropId);
+        if (onlyActive)
+        {
+            query = query.Where(p => p.IsActive);
+        }
+
+        return await query.CountAsync(cancellationToken);
     }
 }

@@ -16,6 +16,9 @@ public sealed class Parcel : AggregateRoot<ParcelId>
     /// <summary>Maximum length of the parcel name.</summary>
     public const int MaxNameLength = 120;
 
+    /// <summary>Maximum length of the parcel phenological stage.</summary>
+    public const int MaxPhenologicalStageLength = 60;
+
     /// <summary>Maximum length of the parcel image URL.</summary>
     public const int MaxImageUrlLength = 500;
 
@@ -33,19 +36,27 @@ public sealed class Parcel : AggregateRoot<ParcelId>
     }
 
     /// <summary>
-    ///     Creates a parcel. The area is derived from the geometry, never provided by the client.
+    ///     Creates a parcel with optional image.
     /// </summary>
-    /// <param name="farmId">The farm the parcel belongs to.</param>
-    /// <param name="cropId">The crop grown in the parcel.</param>
-    /// <param name="name">The parcel name.</param>
-    /// <param name="geometry">The validated polygon.</param>
-    /// <param name="imageUrl">An optional image URL.</param>
     public Parcel(
         FarmId farmId,
         CropId cropId,
         string name,
         GeoJsonPolygon geometry,
-        string? imageUrl = null) : base(ParcelId.Empty)
+        string? imageUrl = null) : this(farmId, cropId, name, geometry, null, imageUrl)
+    {
+    }
+
+    /// <summary>
+    ///     Creates a parcel with optional phenological stage and image.
+    /// </summary>
+    public Parcel(
+        FarmId farmId,
+        CropId cropId,
+        string name,
+        GeoJsonPolygon geometry,
+        string? phenologicalStage,
+        string? imageUrl) : base(ParcelId.Empty)
     {
         _isInitializing = true;
 
@@ -55,6 +66,7 @@ public sealed class Parcel : AggregateRoot<ParcelId>
             AssignCrop(cropId);
             Rename(name);
             RedefineGeometry(geometry);
+            UpdatePhenologicalStage(phenologicalStage);
             ChangeImage(imageUrl);
         }
         finally
@@ -77,6 +89,12 @@ public sealed class Parcel : AggregateRoot<ParcelId>
 
     /// <summary>The area in hectares, derived from <see cref="Geometry" />.</summary>
     public decimal AreaHectares { get; private set; }
+
+    /// <summary>The current phenological stage of the crop in this parcel.</summary>
+    public string? PhenologicalStage { get; private set; }
+
+    /// <summary>Whether the parcel is active in operations (soft-delete flag).</summary>
+    public bool IsActive { get; private set; } = true;
 
     /// <summary>An optional image URL.</summary>
     public string? ImageUrl { get; private set; }
@@ -119,6 +137,37 @@ public sealed class Parcel : AggregateRoot<ParcelId>
             FieldManagementErrors.ParcelNameRequired,
             MaxNameLength,
             FieldManagementErrors.ParcelNameTooLong);
+    }
+
+    /// <summary>Updates the phenological stage of the crop.</summary>
+    /// <param name="stage">The new phenological stage (e.g. Sowing, Flowering, Harvest).</param>
+    public void UpdatePhenologicalStage(string? stage)
+    {
+        if (stage is null)
+        {
+            PhenologicalStage = null;
+            return;
+        }
+
+        var trimmed = stage.Trim();
+        if (trimmed.Length > MaxPhenologicalStageLength)
+        {
+            throw new DomainException(FieldManagementErrors.ParcelPhenologicalStageTooLong);
+        }
+
+        PhenologicalStage = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+    }
+
+    /// <summary>Deactivates the parcel (soft delete).</summary>
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    /// <summary>Reactivates the parcel.</summary>
+    public void Activate()
+    {
+        IsActive = true;
     }
 
     /// <summary>

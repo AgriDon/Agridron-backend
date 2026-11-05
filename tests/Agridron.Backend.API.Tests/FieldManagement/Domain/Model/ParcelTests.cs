@@ -201,4 +201,50 @@ public class ParcelTests
         // Assert
         action.Should().Throw<InvalidOperationException>();
     }
+    [Fact]
+    public void UpdatePhenologicalStage_ShouldTrimAndSetStage()
+    {
+        // Arrange
+        var parcel = CreateParcel();
+
+        // Act
+        parcel.UpdatePhenologicalStage("  Floracion  ");
+
+        // Assert
+        parcel.PhenologicalStage.Should().Be("Floracion");
+    }
+
+    [Fact]
+    public void UpdatePhenologicalStage_ShouldRejectStageTooLong()
+    {
+        // Arrange
+        var parcel = CreateParcel();
+
+        // Act
+        var action = () => parcel.UpdatePhenologicalStage(new string('x', Parcel.MaxPhenologicalStageLength + 1));
+
+        // Assert
+        action.Should().Throw<DomainException>()
+            .Which.Error.Should().Be(FieldManagementErrors.ParcelPhenologicalStageTooLong);
+    }
+
+    [Fact]
+    public void DeactivateAndActivate_ShouldToggleIsActive()
+    {
+        // Arrange
+        var parcel = CreateParcel();
+        parcel.IsActive.Should().BeTrue();
+
+        // Act
+        parcel.Deactivate();
+
+        // Assert
+        parcel.IsActive.Should().BeFalse();
+
+        // Act
+        parcel.Activate();
+
+        // Assert
+        parcel.IsActive.Should().BeTrue();
+    }
 }

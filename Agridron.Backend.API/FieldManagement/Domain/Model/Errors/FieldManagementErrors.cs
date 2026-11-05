@@ -84,6 +84,9 @@ public static class FieldManagementErrors
     public static readonly Error ParcelNameTooLong =
         Error.Validation("ParcelNameTooLong", "The parcel name cannot exceed 120 characters.");
 
+    public static readonly Error ParcelPhenologicalStageTooLong =
+        Error.Validation("ParcelPhenologicalStageTooLong", "The parcel phenological stage cannot exceed 60 characters.");
+
     public static readonly Error ParcelImageUrlInvalid =
         Error.Validation("ParcelImageUrlInvalid", "The parcel image must be an absolute http or https URL.");
 
@@ -163,3 +166,4 @@ public static class FieldManagementErrors
         return Error.Validation("PolygonGeoJsonInvalid", "The GeoJSON could not be parsed.", reason);
     }
 }
+

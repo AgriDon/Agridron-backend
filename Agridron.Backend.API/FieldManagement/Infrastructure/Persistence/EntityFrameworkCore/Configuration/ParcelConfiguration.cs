@@ -64,6 +64,15 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
                 "ST_Area(ST_GeomFromGeoJSON(`geometry_json`)) / 10000",
                 stored: true);
 
+        builder.Property(p => p.PhenologicalStage)
+            .HasColumnName("phenological_stage")
+            .HasMaxLength(Parcel.MaxPhenologicalStageLength);
+
+        builder.Property(p => p.IsActive)
+            .HasColumnName("is_active")
+            .IsRequired()
+            .HasDefaultValue(true);
+
         builder.Property(p => p.ImageUrl)
             .HasColumnName("image_url")
             .HasMaxLength(Parcel.MaxImageUrlLength);

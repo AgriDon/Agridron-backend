@@ -20,6 +20,8 @@ internal static class ParcelAssembler
             parcel.Name,
             parcel.AreaHectares,
             parcel.Geometry.GeoJson,
+            parcel.PhenologicalStage,
+            parcel.IsActive,
             parcel.ImageUrl);
     }
 }

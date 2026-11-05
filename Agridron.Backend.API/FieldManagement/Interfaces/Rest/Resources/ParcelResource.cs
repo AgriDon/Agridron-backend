@@ -9,6 +9,8 @@ namespace Agridron.Backend.API.FieldManagement.Interfaces.Rest.Resources;
 /// <param name="Name">The parcel name.</param>
 /// <param name="AreaHectares">The area in hectares, derived from the geometry.</param>
 /// <param name="Geometry">The canonical GeoJSON polygon.</param>
+/// <param name="PhenologicalStage">The phenological stage of the crop.</param>
+/// <param name="IsActive">Whether the parcel is active.</param>
 /// <param name="ImageUrl">An optional image URL.</param>
 public sealed record ParcelResource(
     long Id,
@@ -17,4 +19,6 @@ public sealed record ParcelResource(
     string Name,
     decimal AreaHectares,
     string Geometry,
+    string? PhenologicalStage,
+    bool IsActive,
     string? ImageUrl);

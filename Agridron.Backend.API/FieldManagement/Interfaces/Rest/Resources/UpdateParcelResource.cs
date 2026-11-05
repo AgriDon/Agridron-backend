@@ -25,6 +25,10 @@ public sealed class UpdateParcelResource
     [Required]
     public string Geometry { get; init; } = string.Empty;
 
+    /// <summary>The optional phenological stage of the crop.</summary>
+    [MaxLength(Parcel.MaxPhenologicalStageLength)]
+    public string? PhenologicalStage { get; init; }
+
     /// <summary>An optional absolute http or https image URL.</summary>
     [Url]
     [MaxLength(Parcel.MaxImageUrlLength)]
