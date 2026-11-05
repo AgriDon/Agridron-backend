@@ -1,3 +1,7 @@
+using Agridron.Backend.API.FieldManagement.Application.CommandServices;
+using Agridron.Backend.API.FieldManagement.Application.Internal.CommandServices;
+using Agridron.Backend.API.FieldManagement.Application.Internal.QueryServices;
+using Agridron.Backend.API.FieldManagement.Application.QueryServices;
 using Agridron.Backend.API.Shared.Domain.Repositories;
 using Agridron.Backend.API.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Agridron.Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration;
@@ -100,6 +104,16 @@ builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositor
     Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.ParcelRepository>();
 builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Domain.Repositories.IFumigationAreaRepository,
     Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.FumigationAreaRepository>();
+
+// Dependency Injection - Field Management application services
+builder.Services.AddScoped<IFarmCommandService, FarmCommandService>();
+builder.Services.AddScoped<IFarmQueryService, FarmQueryService>();
+builder.Services.AddScoped<ICropCommandService, CropCommandService>();
+builder.Services.AddScoped<ICropQueryService, CropQueryService>();
+builder.Services.AddScoped<IParcelCommandService, ParcelCommandService>();
+builder.Services.AddScoped<IParcelQueryService, ParcelQueryService>();
+builder.Services.AddScoped<IFumigationAreaCommandService, FumigationAreaCommandService>();
+builder.Services.AddScoped<IFumigationAreaQueryService, FumigationAreaQueryService>();
 
 // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
