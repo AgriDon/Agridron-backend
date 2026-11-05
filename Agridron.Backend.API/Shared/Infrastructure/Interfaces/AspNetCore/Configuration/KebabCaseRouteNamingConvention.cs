@@ -33,11 +33,14 @@ public class KebabCaseRouteNamingConvention : IControllerModelConvention
     /// <returns>The modified AttributeRouteModel or null</returns>
     private static AttributeRouteModel? ReplaceControllerTemplate(SelectorModel selector, string name)
     {
-        return selector.AttributeRouteModel != null
-            ? new AttributeRouteModel
-            {
-                Template = selector.AttributeRouteModel.Template?.Replace("[controller]", name.ToKebabCase())
-            }
-            : null;
+        if (selector.AttributeRouteModel?.Template is null)
+        {
+            return selector.AttributeRouteModel;
+        }
+
+        selector.AttributeRouteModel.Template =
+            selector.AttributeRouteModel.Template.Replace("[controller]", name.ToKebabCase());
+
+        return selector.AttributeRouteModel;
     }
 }
