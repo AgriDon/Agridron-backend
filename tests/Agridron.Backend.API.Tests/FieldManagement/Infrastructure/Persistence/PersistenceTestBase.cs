@@ -34,7 +34,7 @@ public sealed class FieldManagementDatabaseFixture : IAsyncLifetime
     {
         return new AppDbContext(
             new DbContextOptionsBuilder<AppDbContext>()
-                .UseMySQL(MySqlTestDatabase.ConnectionString)
+                .UseMySQL(MySqlTestDatabase.ConnectionString).AddInterceptors(new Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors.AuditableEntityInterceptor())
                 .Options);
     }
 
@@ -186,3 +186,4 @@ public abstract class PersistenceTestBase : IAsyncLifetime
         return area;
     }
 }
+
