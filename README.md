@@ -19,7 +19,7 @@ los seis bounded contexts del producto.
 | Migraciones | EF Core Migrations |
 | Mediador | Cortex.Mediator |
 | Documentación API | Swashbuckle / OpenAPI 3 |
-| Pruebas | xUnit, FluentAssertions, Testcontainers |
+| Pruebas | xUnit, FluentAssertions, MySQL real |
 | Arquitectura | Monolito modular + DDD por capas + CQRS ligero |
 
 ## Requisitos
@@ -39,7 +39,7 @@ docker compose up -d mysql
 # Restaurar dependencias
 dotnet restore Agridron.Backend.slnx
 
-# Aplicar migraciones (disponibles a partir de la Fase 3)
+# Aplicar migraciones (la API también las aplica al arrancar)
 dotnet ef database update --project Agridron.Backend.API
 
 # Aplicación
@@ -62,7 +62,7 @@ Agridron.Backend.API
 ├── FieldManagement/                   # fincas, parcelas, cultivos y áreas de fumigación
 │   ├── Domain/                        # agregados, value objects, eventos, repositorios
 │   ├── Application/                   # command/query services
-│   ├── Infrastructure/Persistence/    # configuraciones EF Core, repositorios, seed
+│   ├── Infrastructure/Persistence/    # configuraciones EF Core y repositorios
 │   └── Interfaces/Rest/               # controladores, resources y assemblers
 ├── FlightOperations/                  # misiones, drones, incidentes, telemetría
 ├── IdentityAccess/                    # usuarios, roles, JWT
@@ -100,8 +100,13 @@ La regla de dependencia apunta siempre hacia el dominio: `Interfaces → Applica
 dotnet test Agridron.Backend.slnx
 ```
 
-Las pruebas de integración usan MySQL en contenedor (Testcontainers) y se omiten
-automáticamente si Docker no está disponible.
+Las pruebas de integración usan un servidor MySQL 8 real (el mismo de
+`docker compose up -d mysql`) contra la base `agridron_test_db`. Si no hay un servidor
+accesible, esas pruebas se omiten automáticamente. Para apuntar a otro servidor:
+
+```bash
+export AGRIDRON_TEST_CONNECTION="server=localhost;port=3306;user=root;password=root;database=agridron_test_db"
+```
 
 ## Convenciones
 
