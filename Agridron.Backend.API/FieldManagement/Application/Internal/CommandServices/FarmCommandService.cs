@@ -1,5 +1,6 @@
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Commands;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Errors;
 using Agridron.Backend.API.FieldManagement.Domain.Repositories;
 using Agridron.Backend.API.Shared.Application.Model;
@@ -16,17 +17,13 @@ internal sealed class FarmCommandService(
     IParcelRepository parcelRepository,
     IUnitOfWork unitOfWork) : IFarmCommandService
 {
-    /// <inheritdoc />
-    public async Task<Result<Farm>> CreateAsync(
-        string name,
-        string location,
-        long ownerId,
-        string? imageUrl,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Farm>> Handle(CreateFarmCommand command, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(command);
+
         try
         {
-            var farm = new Farm(name, location, ownerId, imageUrl);
+            var farm = new Farm(command.Name, command.Location, command.OwnerId, command.ImageUrl);
 
             await farmRepository.AddAsync(farm, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
@@ -42,27 +39,22 @@ internal sealed class FarmCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result<Farm>> UpdateAsync(
-        long id,
-        string name,
-        string location,
-        long ownerId,
-        string? imageUrl,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Farm>> Handle(UpdateFarmCommand command, CancellationToken cancellationToken = default)
     {
-        var farm = await farmRepository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var farm = await farmRepository.FindByIdAsync(command.Id, cancellationToken);
         if (farm is null)
         {
-            return Result<Farm>.Failure(FieldManagementErrors.FarmNotFound(id));
+            return Result<Farm>.Failure(FieldManagementErrors.FarmNotFound(command.Id));
         }
 
         try
         {
-            farm.Rename(name);
-            farm.Relocate(location);
-            farm.ChangeOwner(ownerId);
-            farm.ChangeImage(imageUrl);
+            farm.Rename(command.Name);
+            farm.Relocate(command.Location);
+            farm.ChangeOwner(command.OwnerId);
+            farm.ChangeImage(command.ImageUrl);
 
             await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -74,18 +66,19 @@ internal sealed class FarmCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Result> Handle(DeleteFarmCommand command, CancellationToken cancellationToken = default)
     {
-        var farm = await farmRepository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var farm = await farmRepository.FindByIdAsync(command.Id, cancellationToken);
         if (farm is null)
         {
-            return Result.Failure(FieldManagementErrors.FarmNotFound(id));
+            return Result.Failure(FieldManagementErrors.FarmNotFound(command.Id));
         }
 
-        if (await parcelRepository.CountByFarmIdAsync(farm.Id, cancellationToken) > 0)
+        if (await parcelRepository.CountByFarmIdAsync(farm.Id, onlyActive: true, cancellationToken) > 0)
         {
-            return Result.Failure(FieldManagementErrors.FarmHasParcels(id));
+            return Result.Failure(FieldManagementErrors.FarmHasParcels(command.Id));
         }
 
         farmRepository.Remove(farm);
@@ -93,4 +86,24 @@ internal sealed class FarmCommandService(
 
         return Result.Success();
     }
+
+    public Task<Result<Farm>> CreateAsync(
+        string name,
+        string location,
+        long ownerId,
+        string? imageUrl,
+        CancellationToken cancellationToken = default) =>
+        Handle(new CreateFarmCommand(name, location, ownerId, imageUrl), cancellationToken);
+
+    public Task<Result<Farm>> UpdateAsync(
+        long id,
+        string name,
+        string location,
+        long ownerId,
+        string? imageUrl,
+        CancellationToken cancellationToken = default) =>
+        Handle(new UpdateFarmCommand(id, name, location, ownerId, imageUrl), cancellationToken);
+
+    public Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default) =>
+        Handle(new DeleteFarmCommand(id), cancellationToken);
 }

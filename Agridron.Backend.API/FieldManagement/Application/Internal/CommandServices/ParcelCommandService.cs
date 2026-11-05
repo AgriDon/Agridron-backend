@@ -1,5 +1,6 @@
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Commands;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Errors;
 using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FieldManagement.Domain.Repositories;
@@ -20,16 +21,11 @@ internal sealed class ParcelCommandService(
     IFumigationAreaRepository fumigationAreaRepository,
     IUnitOfWork unitOfWork) : IParcelCommandService
 {
-    /// <inheritdoc />
-    public async Task<Result<Parcel>> CreateAsync(
-        long farmId,
-        long cropId,
-        string name,
-        string geometry,
-        string? imageUrl,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Parcel>> Handle(CreateParcelCommand command, CancellationToken cancellationToken = default)
     {
-        var referenceError = await ValidateReferencesAsync(farmId, cropId, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var referenceError = await ValidateReferencesAsync(command.FarmId, command.CropId, cancellationToken);
         if (referenceError is not null)
         {
             return Result<Parcel>.Failure(referenceError);
@@ -38,11 +34,12 @@ internal sealed class ParcelCommandService(
         try
         {
             var parcel = new Parcel(
-                new FarmId(farmId),
-                new CropId(cropId),
-                name,
-                GeoJsonPolygon.FromGeoJson(geometry),
-                imageUrl);
+                new FarmId(command.FarmId),
+                new CropId(command.CropId),
+                command.Name,
+                GeoJsonPolygon.FromGeoJson(command.Geometry),
+                command.PhenologicalStage,
+                command.ImageUrl);
 
             await parcelRepository.AddAsync(parcel, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
@@ -58,23 +55,17 @@ internal sealed class ParcelCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result<Parcel>> UpdateAsync(
-        long id,
-        long farmId,
-        long cropId,
-        string name,
-        string geometry,
-        string? imageUrl,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Parcel>> Handle(UpdateParcelCommand command, CancellationToken cancellationToken = default)
     {
-        var parcel = await parcelRepository.FindByIdAsync(id, cancellationToken);
-        if (parcel is null)
+        ArgumentNullException.ThrowIfNull(command);
+
+        var parcel = await parcelRepository.FindByIdAsync(command.Id, cancellationToken);
+        if (parcel is null || !parcel.IsActive)
         {
-            return Result<Parcel>.Failure(FieldManagementErrors.ParcelNotFound(id));
+            return Result<Parcel>.Failure(FieldManagementErrors.ParcelNotFound(command.Id));
         }
 
-        var referenceError = await ValidateReferencesAsync(farmId, cropId, cancellationToken);
+        var referenceError = await ValidateReferencesAsync(command.FarmId, command.CropId, cancellationToken);
         if (referenceError is not null)
         {
             return Result<Parcel>.Failure(referenceError);
@@ -82,11 +73,12 @@ internal sealed class ParcelCommandService(
 
         try
         {
-            parcel.MoveToFarm(new FarmId(farmId));
-            parcel.AssignCrop(new CropId(cropId));
-            parcel.Rename(name);
-            parcel.RedefineGeometry(GeoJsonPolygon.FromGeoJson(geometry));
-            parcel.ChangeImage(imageUrl);
+            parcel.MoveToFarm(new FarmId(command.FarmId));
+            parcel.AssignCrop(new CropId(command.CropId));
+            parcel.Rename(command.Name);
+            parcel.RedefineGeometry(GeoJsonPolygon.FromGeoJson(command.Geometry));
+            parcel.UpdatePhenologicalStage(command.PhenologicalStage);
+            parcel.ChangeImage(command.ImageUrl);
 
             await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -98,25 +90,52 @@ internal sealed class ParcelCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Result> Handle(DeleteParcelCommand command, CancellationToken cancellationToken = default)
     {
-        var parcel = await parcelRepository.FindByIdAsync(id, cancellationToken);
-        if (parcel is null)
+        ArgumentNullException.ThrowIfNull(command);
+
+        var parcel = await parcelRepository.FindByIdAsync(command.Id, cancellationToken);
+        if (parcel is null || !parcel.IsActive)
         {
-            return Result.Failure(FieldManagementErrors.ParcelNotFound(id));
+            return Result.Failure(FieldManagementErrors.ParcelNotFound(command.Id));
         }
 
         if (await fumigationAreaRepository.CountByParcelIdAsync(parcel.Id, cancellationToken) > 0)
         {
-            return Result.Failure(FieldManagementErrors.ParcelHasFumigationAreas(id));
+            return Result.Failure(FieldManagementErrors.ParcelHasFumigationAreas(command.Id));
         }
 
-        parcelRepository.Remove(parcel);
+        // Soft-delete: inactivate parcel to preserve operational and flight mission history (FM-006)
+        parcel.Deactivate();
+        parcelRepository.Update(parcel);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return Result.Success();
     }
+
+    public Task<Result<Parcel>> CreateAsync(
+        long farmId,
+        long cropId,
+        string name,
+        string geometry,
+        string? phenologicalStage = null,
+        string? imageUrl = null,
+        CancellationToken cancellationToken = default) =>
+        Handle(new CreateParcelCommand(farmId, cropId, name, geometry, phenologicalStage, imageUrl), cancellationToken);
+
+    public Task<Result<Parcel>> UpdateAsync(
+        long id,
+        long farmId,
+        long cropId,
+        string name,
+        string geometry,
+        string? phenologicalStage = null,
+        string? imageUrl = null,
+        CancellationToken cancellationToken = default) =>
+        Handle(new UpdateParcelCommand(id, farmId, cropId, name, geometry, phenologicalStage, imageUrl), cancellationToken);
+
+    public Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default) =>
+        Handle(new DeleteParcelCommand(id), cancellationToken);
 
     private async Task<Error?> ValidateReferencesAsync(
         long farmId,

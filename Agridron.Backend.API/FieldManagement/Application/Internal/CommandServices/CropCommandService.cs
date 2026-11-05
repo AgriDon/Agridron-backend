@@ -1,5 +1,6 @@
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Commands;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Errors;
 using Agridron.Backend.API.FieldManagement.Domain.Repositories;
 using Agridron.Backend.API.Shared.Application.Model;
@@ -16,27 +17,18 @@ internal sealed class CropCommandService(
     IParcelRepository parcelRepository,
     IUnitOfWork unitOfWork) : ICropCommandService
 {
-    /// <inheritdoc />
-    public async Task<Result<Crop>> CreateAsync(
-        string name,
-        string variety,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Crop>> Handle(CreateCropCommand command, CancellationToken cancellationToken = default)
     {
-        var trimmedName = (name ?? string.Empty).Trim();
-        var trimmedVariety = (variety ?? string.Empty).Trim();
-
-        if (await cropRepository.ExistsWithNameAndVarietyAsync(
-                trimmedName,
-                trimmedVariety,
-                cancellationToken: cancellationToken))
-        {
-            return Result<Crop>.Failure(
-                FieldManagementErrors.CropAlreadyExists(trimmedName, trimmedVariety));
-        }
+        ArgumentNullException.ThrowIfNull(command);
 
         try
         {
-            var crop = new Crop(trimmedName, trimmedVariety);
+            var crop = new Crop(command.Name, command.Variety);
+
+            if (await cropRepository.ExistsWithNameAndVarietyAsync(crop.Name, crop.Variety, cancellationToken: cancellationToken))
+            {
+                return Result<Crop>.Failure(FieldManagementErrors.CropAlreadyExists(crop.Name, crop.Variety));
+            }
 
             await cropRepository.AddAsync(crop, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
@@ -52,35 +44,24 @@ internal sealed class CropCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result<Crop>> UpdateAsync(
-        long id,
-        string name,
-        string variety,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<Crop>> Handle(UpdateCropCommand command, CancellationToken cancellationToken = default)
     {
-        var crop = await cropRepository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var crop = await cropRepository.FindByIdAsync(command.Id, cancellationToken);
         if (crop is null)
         {
-            return Result<Crop>.Failure(FieldManagementErrors.CropNotFound(id));
-        }
-
-        var trimmedName = (name ?? string.Empty).Trim();
-        var trimmedVariety = (variety ?? string.Empty).Trim();
-
-        if (await cropRepository.ExistsWithNameAndVarietyAsync(
-                trimmedName,
-                trimmedVariety,
-                id,
-                cancellationToken))
-        {
-            return Result<Crop>.Failure(
-                FieldManagementErrors.CropAlreadyExists(trimmedName, trimmedVariety));
+            return Result<Crop>.Failure(FieldManagementErrors.CropNotFound(command.Id));
         }
 
         try
         {
-            crop.UpdateDetails(trimmedName, trimmedVariety);
+            crop.UpdateDetails(command.Name, command.Variety);
+
+            if (await cropRepository.ExistsWithNameAndVarietyAsync(crop.Name, crop.Variety, crop.Id.Value, cancellationToken))
+            {
+                return Result<Crop>.Failure(FieldManagementErrors.CropAlreadyExists(crop.Name, crop.Variety));
+            }
 
             await unitOfWork.CompleteAsync(cancellationToken);
 
@@ -92,18 +73,19 @@ internal sealed class CropCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Result> Handle(DeleteCropCommand command, CancellationToken cancellationToken = default)
     {
-        var crop = await cropRepository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var crop = await cropRepository.FindByIdAsync(command.Id, cancellationToken);
         if (crop is null)
         {
-            return Result.Failure(FieldManagementErrors.CropNotFound(id));
+            return Result.Failure(FieldManagementErrors.CropNotFound(command.Id));
         }
 
-        if (await parcelRepository.CountByCropIdAsync(crop.Id, cancellationToken) > 0)
+        if (await parcelRepository.CountByCropIdAsync(crop.Id, onlyActive: true, cancellationToken) > 0)
         {
-            return Result.Failure(FieldManagementErrors.CropHasParcels(id));
+            return Result.Failure(FieldManagementErrors.CropHasParcels(command.Id));
         }
 
         cropRepository.Remove(crop);
@@ -111,4 +93,17 @@ internal sealed class CropCommandService(
 
         return Result.Success();
     }
+
+    public Task<Result<Crop>> CreateAsync(string name, string variety, CancellationToken cancellationToken = default) =>
+        Handle(new CreateCropCommand(name, variety), cancellationToken);
+
+    public Task<Result<Crop>> UpdateAsync(
+        long id,
+        string name,
+        string variety,
+        CancellationToken cancellationToken = default) =>
+        Handle(new UpdateCropCommand(id, name, variety), cancellationToken);
+
+    public Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default) =>
+        Handle(new DeleteCropCommand(id), cancellationToken);
 }

@@ -1,5 +1,6 @@
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Commands;
 using Agridron.Backend.API.FieldManagement.Domain.Model.Errors;
 using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FieldManagement.Domain.Repositories;
@@ -13,36 +14,36 @@ namespace Agridron.Backend.API.FieldManagement.Application.Internal.CommandServi
 ///     Use cases that change fumigation areas.
 /// </summary>
 internal sealed class FumigationAreaCommandService(
-    IFumigationAreaRepository repository,
+    IFumigationAreaRepository fumigationAreaRepository,
     IParcelRepository parcelRepository,
     IUnitOfWork unitOfWork) : IFumigationAreaCommandService
 {
-    /// <inheritdoc />
-    public async Task<Result<FumigationArea>> CreateAsync(
-        long parcelId,
-        string geometry,
+    public async Task<Result<FumigationArea>> Handle(
+        CreateFumigationAreaCommand command,
         CancellationToken cancellationToken = default)
     {
-        if (parcelId <= 0)
+        ArgumentNullException.ThrowIfNull(command);
+
+        if (command.ParcelId <= 0)
         {
             return Result<FumigationArea>.Failure(FieldManagementErrors.FumigationAreaParcelInvalid);
         }
 
-        var parcel = await parcelRepository.FindByIdAsync(parcelId, cancellationToken);
-        if (parcel is null)
+        var parcel = await parcelRepository.FindByIdAsync(command.ParcelId, cancellationToken);
+        if (parcel is null || !parcel.IsActive)
         {
-            return Result<FumigationArea>.Failure(FieldManagementErrors.ParcelNotFound(parcelId));
+            return Result<FumigationArea>.Failure(FieldManagementErrors.ParcelNotFound(command.ParcelId));
         }
 
         try
         {
             var area = new FumigationArea(
-                new ParcelId(parcelId),
-                GeoJsonPolygon.FromGeoJson(geometry));
+                new ParcelId(command.ParcelId),
+                GeoJsonPolygon.FromGeoJson(command.Geometry));
 
             area.EnsureFitsWithin(parcel.AreaHectares);
 
-            await repository.AddAsync(area, cancellationToken);
+            await fumigationAreaRepository.AddAsync(area, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
 
             area.MarkAsCreated();
@@ -56,34 +57,28 @@ internal sealed class FumigationAreaCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result<FumigationArea>> UpdateAsync(
-        long id,
-        long parcelId,
-        string geometry,
+    public async Task<Result<FumigationArea>> Handle(
+        UpdateFumigationAreaCommand command,
         CancellationToken cancellationToken = default)
     {
-        var area = await repository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var area = await fumigationAreaRepository.FindByIdAsync(command.Id, cancellationToken);
         if (area is null)
         {
-            return Result<FumigationArea>.Failure(FieldManagementErrors.FumigationAreaNotFound(id));
+            return Result<FumigationArea>.Failure(FieldManagementErrors.FumigationAreaNotFound(command.Id));
         }
 
-        if (parcelId <= 0)
+        var parcel = await parcelRepository.FindByIdAsync(command.ParcelId, cancellationToken);
+        if (parcel is null || !parcel.IsActive)
         {
-            return Result<FumigationArea>.Failure(FieldManagementErrors.FumigationAreaParcelInvalid);
-        }
-
-        var parcel = await parcelRepository.FindByIdAsync(parcelId, cancellationToken);
-        if (parcel is null)
-        {
-            return Result<FumigationArea>.Failure(FieldManagementErrors.ParcelNotFound(parcelId));
+            return Result<FumigationArea>.Failure(FieldManagementErrors.ParcelNotFound(command.ParcelId));
         }
 
         try
         {
-            area.MoveToParcel(new ParcelId(parcelId));
-            area.RedefineGeometry(GeoJsonPolygon.FromGeoJson(geometry));
+            area.MoveToParcel(new ParcelId(command.ParcelId));
+            area.RedefineGeometry(GeoJsonPolygon.FromGeoJson(command.Geometry));
             area.EnsureFitsWithin(parcel.AreaHectares);
 
             await unitOfWork.CompleteAsync(cancellationToken);
@@ -96,18 +91,37 @@ internal sealed class FumigationAreaCommandService(
         }
     }
 
-    /// <inheritdoc />
-    public async Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Result> Handle(
+        DeleteFumigationAreaCommand command,
+        CancellationToken cancellationToken = default)
     {
-        var area = await repository.FindByIdAsync(id, cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        var area = await fumigationAreaRepository.FindByIdAsync(command.Id, cancellationToken);
         if (area is null)
         {
-            return Result.Failure(FieldManagementErrors.FumigationAreaNotFound(id));
+            return Result.Failure(FieldManagementErrors.FumigationAreaNotFound(command.Id));
         }
 
-        repository.Remove(area);
+        fumigationAreaRepository.Remove(area);
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return Result.Success();
     }
+
+    public Task<Result<FumigationArea>> CreateAsync(
+        long parcelId,
+        string geometry,
+        CancellationToken cancellationToken = default) =>
+        Handle(new CreateFumigationAreaCommand(parcelId, geometry), cancellationToken);
+
+    public Task<Result<FumigationArea>> UpdateAsync(
+        long id,
+        long parcelId,
+        string geometry,
+        CancellationToken cancellationToken = default) =>
+        Handle(new UpdateFumigationAreaCommand(id, parcelId, geometry), cancellationToken);
+
+    public Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default) =>
+        Handle(new DeleteFumigationAreaCommand(id), cancellationToken);
 }
