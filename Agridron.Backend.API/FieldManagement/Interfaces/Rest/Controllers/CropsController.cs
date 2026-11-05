@@ -1,11 +1,14 @@
 using System.Globalization;
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Application.QueryServices;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Commands;
+using Agridron.Backend.API.FieldManagement.Domain.Model.Queries;
 using Agridron.Backend.API.FieldManagement.Interfaces.Rest.Resources;
 using Agridron.Backend.API.FieldManagement.Interfaces.Rest.Transform;
 using Agridron.Backend.API.Shared.Application.Model;
 using Agridron.Backend.API.Shared.Interfaces.Rest.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Agridron.Backend.API.FieldManagement.Interfaces.Rest.Controllers;
 
@@ -15,6 +18,7 @@ namespace Agridron.Backend.API.FieldManagement.Interfaces.Rest.Controllers;
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
+[SwaggerTag("Available Crop Endpoints.")]
 public class CropsController(
     ICropCommandService cropCommandService,
     ICropQueryService cropQueryService,
@@ -22,15 +26,20 @@ public class CropsController(
 {
     /// <summary>Lists every crop.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CropResource>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [SwaggerOperation(
+        Summary = "Get all crops",
+        Description = "Retrieves all agricultural crop types and varieties registered in the system with pagination support.",
+        OperationId = "GetCrops")]
+    [SwaggerResponse(StatusCodes.Status200OK, "List of crops retrieved successfully", typeof(IEnumerable<CropResource>))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid query parameters")]
     public async Task<IActionResult> GetCropsAsync(
         [FromQuery] int? page,
         [FromQuery] int? size,
         CancellationToken cancellationToken)
     {
         var pagination = PaginationParameters.Create(page, size);
-        var result = await cropQueryService.ListAsync(pagination, cancellationToken);
+        var query = new GetAllCropsQuery(pagination);
+        var result = await cropQueryService.Handle(query, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -49,11 +58,16 @@ public class CropsController(
 
     /// <summary>Finds a crop by its identifier.</summary>
     [HttpGet("{id:long}", Name = "GetCropById")]
-    [ProducesResponseType(typeof(CropResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [SwaggerOperation(
+        Summary = "Get crop by ID",
+        Description = "Retrieves details of a specific crop by its unique identifier.",
+        OperationId = "GetCropById")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Crop found successfully", typeof(CropResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Crop not found")]
     public async Task<IActionResult> GetCropByIdAsync(long id, CancellationToken cancellationToken)
     {
-        var result = await cropQueryService.GetByIdAsync(id, cancellationToken);
+        var query = new GetCropByIdQuery(id);
+        var result = await cropQueryService.Handle(query, cancellationToken);
 
         return result.IsSuccess
             ? Ok(CropAssembler.ToResourceFrom(result.Value!))
@@ -62,17 +76,19 @@ public class CropsController(
 
     /// <summary>Registers a crop.</summary>
     [HttpPost]
-    [ProducesResponseType(typeof(CropResource), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerOperation(
+        Summary = "Create crop",
+        Description = "Registers a new crop with its name and variety combination.",
+        OperationId = "CreateCrop")]
+    [SwaggerResponse(StatusCodes.Status201Created, "Crop registered successfully", typeof(CropResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid crop payload")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Crop with same name and variety already exists")]
     public async Task<IActionResult> CreateCropAsync(
         [FromBody] CreateCropResource resource,
         CancellationToken cancellationToken)
     {
-        var result = await cropCommandService.CreateAsync(
-            resource.Name,
-            resource.Variety,
-            cancellationToken);
+        var command = CreateCropCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var result = await cropCommandService.Handle(command, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -85,20 +101,21 @@ public class CropsController(
 
     /// <summary>Updates a crop.</summary>
     [HttpPut("{id:long}")]
-    [ProducesResponseType(typeof(CropResource), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerOperation(
+        Summary = "Update crop",
+        Description = "Updates the name or variety of an existing crop.",
+        OperationId = "UpdateCrop")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Crop updated successfully", typeof(CropResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid update payload")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Crop not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Crop with same name and variety already exists")]
     public async Task<IActionResult> UpdateCropAsync(
         long id,
         [FromBody] UpdateCropResource resource,
         CancellationToken cancellationToken)
     {
-        var result = await cropCommandService.UpdateAsync(
-            id,
-            resource.Name,
-            resource.Variety,
-            cancellationToken);
+        var command = UpdateCropCommandFromResourceAssembler.ToCommandFromResource(id, resource);
+        var result = await cropCommandService.Handle(command, cancellationToken);
 
         return result.IsSuccess
             ? Ok(CropAssembler.ToResourceFrom(result.Value!))
@@ -107,12 +124,17 @@ public class CropsController(
 
     /// <summary>Deletes a crop that is not assigned to any parcel.</summary>
     [HttpDelete("{id:long}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerOperation(
+        Summary = "Delete crop",
+        Description = "Deletes a crop as long as it is not assigned to any active parcel.",
+        OperationId = "DeleteCrop")]
+    [SwaggerResponse(StatusCodes.Status204NoContent, "Crop deleted successfully")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Crop not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Crop is assigned to parcels and cannot be deleted")]
     public async Task<IActionResult> DeleteCropAsync(long id, CancellationToken cancellationToken)
     {
-        var result = await cropCommandService.DeleteAsync(id, cancellationToken);
+        var command = new DeleteCropCommand(id);
+        var result = await cropCommandService.Handle(command, cancellationToken);
 
         return result.IsSuccess
             ? NoContent()
