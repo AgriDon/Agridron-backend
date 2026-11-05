@@ -2,6 +2,7 @@ using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
 using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -10,6 +11,18 @@ namespace Agridron.Backend.API.FieldManagement.Infrastructure.Persistence.Entity
 /// </summary>
 internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
 {
+    private static readonly ValueConverter<ParcelId, long> ParcelIdConverter =
+        new(v => v.Value, v => new ParcelId(v));
+
+    private static readonly ValueConverter<FarmId, long> FarmIdConverter =
+        new(v => v.Value, v => new FarmId(v));
+
+    private static readonly ValueConverter<CropId, long> CropIdConverter =
+        new(v => v.Value, v => new CropId(v));
+
+    private static readonly ValueConverter<GeoJsonPolygon, string> GeoJsonPolygonConverter =
+        new(v => v.GeoJson, v => GeoJsonPolygon.FromGeoJson(v));
+
     public void Configure(EntityTypeBuilder<Parcel> builder)
     {
         builder.ToTable("parcels");
@@ -18,14 +31,17 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
 
         builder.Property(p => p.Id)
             .HasColumnName("id")
+            .HasConversion(ParcelIdConverter)
             .ValueGeneratedOnAdd();
 
         builder.Property(p => p.FarmId)
             .HasColumnName("farm_id")
+            .HasConversion(FarmIdConverter)
             .IsRequired();
 
         builder.Property(p => p.CropId)
             .HasColumnName("crop_id")
+            .HasConversion(CropIdConverter)
             .IsRequired();
 
         builder.Property(p => p.Name)
@@ -37,23 +53,15 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
         builder.Property(p => p.Geometry)
             .HasColumnName("geometry_json")
             .HasColumnType("LONGTEXT")
+            .HasConversion(GeoJsonPolygonConverter)
             .IsRequired();
-
-        // Native spatial column generated from the JSON. MySQL 8 supports
-        // ST_GeomFromGeoJSON and spatial indexes on GEOMETRY columns.
-        builder.Property(p => p.Geometry)
-            .HasColumnName("geometry_native")
-            .HasColumnType("GEOMETRY SRID 4326")
-            .HasComputedColumnSql(
-                "ST_GeomFromGeoJSON(`geometry_json`, 4326)",
-                stored: true);
 
         // Area in hectares, derived from the geometry.
         builder.Property(p => p.AreaHectares)
             .HasColumnName("area_hectares")
             .HasColumnType("DECIMAL(10,2)")
             .HasComputedColumnSql(
-                "ST_Area(`geometry_native`) / 10000",
+                "ST_Area(ST_GeomFromGeoJSON(`geometry_json`, 4326)) / 10000",
                 stored: true);
 
         builder.Property(p => p.ImageUrl)
@@ -65,9 +73,5 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
 
         builder.HasIndex(p => p.CropId)
             .HasDatabaseName("ix_parcels_crop_id");
-
-        // Spatial index on the native geometry column.
-        builder.HasIndex(p => p.Geometry)
-            .HasDatabaseName("sx_parcels_geometry");
     }
 }
