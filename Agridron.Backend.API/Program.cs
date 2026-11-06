@@ -114,6 +114,8 @@ builder.Services.AddScoped<IParcelCommandService, ParcelCommandService>();
 builder.Services.AddScoped<IParcelQueryService, ParcelQueryService>();
 builder.Services.AddScoped<IFumigationAreaCommandService, FumigationAreaCommandService>();
 builder.Services.AddScoped<IFumigationAreaQueryService, FumigationAreaQueryService>();
+builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Interfaces.ACL.IFieldManagementContextFacade,
+    Agridron.Backend.API.FieldManagement.Application.ACL.FieldManagementContextFacade>();
 
 // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
