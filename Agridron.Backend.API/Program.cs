@@ -117,6 +117,36 @@ builder.Services.AddScoped<IFumigationAreaQueryService, FumigationAreaQueryServi
 builder.Services.AddScoped<Agridron.Backend.API.FieldManagement.Interfaces.ACL.IFieldManagementContextFacade,
     Agridron.Backend.API.FieldManagement.Application.ACL.FieldManagementContextFacade>();
 
+// Dependency Injection - Flight Operations Bounded Context repositories
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IDroneRepository,
+    Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.DroneRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IMissionRepository,
+    Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.MissionRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IIncidentRepository,
+    Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.IncidentRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IOperationStatusRepository,
+    Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.OperationStatusRepository>();
+
+// Dependency Injection - Flight Operations ACL & application services
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.Internal.OutboundServices.ACL.IExternalFieldService,
+    Agridron.Backend.API.FlightOperations.Infrastructure.ACL.ExternalFieldService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.CommandServices.IDroneCommandService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.CommandServices.DroneCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.QueryServices.IDroneQueryService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices.DroneQueryService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.CommandServices.IMissionCommandService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.CommandServices.MissionCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.QueryServices.IMissionQueryService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices.MissionQueryService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.CommandServices.IIncidentCommandService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.CommandServices.IncidentCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.QueryServices.IIncidentQueryService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices.IncidentQueryService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.CommandServices.IOperationStatusCommandService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.CommandServices.OperationStatusCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.QueryServices.IOperationStatusQueryService,
+    Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices.OperationStatusQueryService>();
+
 // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
 builder.Services.AddCortexMediator([typeof(Program)]);
