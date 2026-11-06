@@ -29,6 +29,8 @@ public sealed class GeoCoordinate : ValueObject
         Longitude = longitude;
     }
 
+    public static GeoCoordinate Create(decimal latitude, decimal longitude) => new(latitude, longitude);
+
     public decimal Latitude { get; private set; }
     public decimal Longitude { get; private set; }
 

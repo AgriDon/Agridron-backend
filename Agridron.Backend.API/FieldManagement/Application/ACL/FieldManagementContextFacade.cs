@@ -9,7 +9,8 @@ namespace Agridron.Backend.API.FieldManagement.Application.ACL;
 /// </summary>
 public sealed class FieldManagementContextFacade(
     IParcelQueryService parcelQueryService,
-    ICropQueryService cropQueryService) : IFieldManagementContextFacade
+    ICropQueryService cropQueryService,
+    IFarmQueryService farmQueryService) : IFieldManagementContextFacade
 {
     public async Task<ParcelSnapshotDto?> FetchParcelByIdAsync(
         long parcelId,
@@ -46,5 +47,13 @@ public sealed class FieldManagementContextFacade(
     {
         var parcelResult = await parcelQueryService.Handle(new GetParcelByIdQuery(parcelId), cancellationToken);
         return parcelResult.IsSuccess && parcelResult.Value is not null && parcelResult.Value.IsActive;
+    }
+
+    public async Task<bool> ExistsActiveFarmAsync(
+        long farmId,
+        CancellationToken cancellationToken = default)
+    {
+        var farmResult = await farmQueryService.Handle(new GetFarmByIdQuery(farmId), cancellationToken);
+        return farmResult.IsSuccess && farmResult.Value is not null;
     }
 }

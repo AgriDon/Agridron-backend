@@ -54,6 +54,13 @@ public sealed class FlightParameters : ValueObject
         OverlapPercentage = overlapPercentage;
     }
 
+    public static FlightParameters Create(
+        decimal altitudeMeters,
+        decimal speedMetersPerSecond,
+        decimal sprayRateLitersPerHectare,
+        decimal overlapPercentage) =>
+        new(altitudeMeters, speedMetersPerSecond, sprayRateLitersPerHectare, overlapPercentage);
+
     public decimal AltitudeMeters { get; private set; }
     public decimal SpeedMetersPerSecond { get; private set; }
     public decimal SprayRateLitersPerHectare { get; private set; }

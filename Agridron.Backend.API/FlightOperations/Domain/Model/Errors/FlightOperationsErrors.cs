@@ -102,6 +102,18 @@ public static class FlightOperationsErrors
     public static Error MissionCannotBeCancelled(string status) =>
         Error.BusinessRule("MissionCannotBeCancelled", $"Mission in status '{status}' cannot be cancelled.");
 
+    public static Error MissionInProgress(long missionId) =>
+        Error.Conflict("MissionInProgress", $"Mission with id {missionId} is currently in progress and cannot be deleted.");
+
+    public static Error FarmNotFound(long farmId) =>
+        Error.NotFound("FarmNotFound", $"Farm with id {farmId} was not found.");
+
+    public static Error ParcelNotFound(long parcelId) =>
+        Error.NotFound("ParcelNotFound", $"Parcel with id {parcelId} was not found.");
+
+    public static Error ParcelDoesNotBelongToFarm(long parcelId, long farmId) =>
+        Error.Conflict("ParcelDoesNotBelongToFarm", $"Parcel with id {parcelId} does not belong to farm with id {farmId}.");
+
     // ---------------------------------------------------------------------
     // Flight Parameters Errors
     // ---------------------------------------------------------------------

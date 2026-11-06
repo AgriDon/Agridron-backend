@@ -20,4 +20,12 @@ public interface IFieldManagementContextFacade
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if an active parcel exists; otherwise false.</returns>
     Task<bool> ExistsActiveParcelAsync(long parcelId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Checks whether an active farm exists by its identifier.
+    /// </summary>
+    /// <param name="farmId">Database identifier of the farm.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if an active farm exists; otherwise false.</returns>
+    Task<bool> ExistsActiveFarmAsync(long farmId, CancellationToken cancellationToken = default);
 }

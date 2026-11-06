@@ -91,10 +91,13 @@ public sealed class Mission : AggregateRoot<MissionId>, IAuditableEntity
     public GeoCoordinate? LastPausePoint { get; private set; }
     public DateTimeOffset? StartedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
+    public bool IsActive { get; private set; } = true;
 
     // IAuditableEntity
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    public void Deactivate() => IsActive = false;
 
     public void SetCode(string code)
     {
