@@ -15,6 +15,19 @@ public static class ModelBuilderExtensions
     {
         foreach (var entity in builder.Model.GetEntityTypes())
         {
+            if (entity.IsOwned())
+            {
+                foreach (var property in entity.GetProperties())
+                {
+                    if (!property.IsPrimaryKey())
+                    {
+                        property.SetColumnName(property.GetColumnName().ToSnakeCase());
+                    }
+                }
+
+                continue;
+            }
+
             var tableName = entity.GetTableName();
             if (!string.IsNullOrEmpty(tableName))
             {
