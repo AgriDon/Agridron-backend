@@ -38,7 +38,12 @@ public sealed record MissionResource(
     DateTimeOffset? CompletedAt,
     bool IsActive,
     DateTimeOffset? CreatedAt,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt)
+{
+    public string? Operator => OperatorName;
+    public string? Product => ProductName;
+    public DateTimeOffset Date => ScheduledAt;
+}
 
 public sealed record CreateMissionResource(
     string? Code,
@@ -54,7 +59,20 @@ public sealed record CreateMissionResource(
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal? ProductDose,
     string? Notes,
     long? DroneId,
-    int? Progress);
+    int? Progress,
+    DateTimeOffset? Date = null,
+    string? Operator = null,
+    string? Product = null)
+{
+    [JsonIgnore]
+    public DateTimeOffset? EffectiveScheduledAt => ScheduledAt ?? Date;
+
+    [JsonIgnore]
+    public string? EffectiveOperatorName => !string.IsNullOrWhiteSpace(OperatorName) ? OperatorName : Operator;
+
+    [JsonIgnore]
+    public string? EffectiveProductName => !string.IsNullOrWhiteSpace(ProductName) ? ProductName : Product;
+}
 
 public sealed record UpdateMissionResource(
     long? FarmId,
@@ -67,7 +85,20 @@ public sealed record UpdateMissionResource(
     string? TreatmentType,
     string? ProductName,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal? ProductDose,
-    string? Notes);
+    string? Notes,
+    DateTimeOffset? Date = null,
+    string? Operator = null,
+    string? Product = null)
+{
+    [JsonIgnore]
+    public DateTimeOffset? EffectiveScheduledAt => ScheduledAt ?? Date;
+
+    [JsonIgnore]
+    public string? EffectiveOperatorName => !string.IsNullOrWhiteSpace(OperatorName) ? OperatorName : Operator;
+
+    [JsonIgnore]
+    public string? EffectiveProductName => !string.IsNullOrWhiteSpace(ProductName) ? ProductName : Product;
+}
 
 public sealed record AssignMissionResourcesResource(
     long DroneId,

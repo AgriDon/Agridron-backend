@@ -33,4 +33,11 @@ public sealed class UpdateParcelResource
     [Url]
     [MaxLength(Parcel.MaxImageUrlLength)]
     public string? ImageUrl { get; init; }
+
+    /// <summary>Alias for ImageUrl matching frontend conventions.</summary>
+    [Url]
+    [MaxLength(Parcel.MaxImageUrlLength)]
+    public string? Image { get; init; }
+
+    public string? EffectiveImageUrl => !string.IsNullOrWhiteSpace(ImageUrl) ? ImageUrl : Image;
 }

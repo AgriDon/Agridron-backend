@@ -11,6 +11,6 @@ public static class CreateFarmCommandFromResourceAssembler
     public static CreateFarmCommand ToCommandFromResource(CreateFarmResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
-        return new CreateFarmCommand(resource.Name, resource.Location, resource.OwnerId, resource.ImageUrl);
+        return new CreateFarmCommand(resource.Name, resource.Location, resource.OwnerId, resource.EffectiveImageUrl);
     }
 }

@@ -11,4 +11,7 @@ public sealed record FumigationAreaResource(
     long Id,
     long ParcelId,
     decimal AreaHectares,
-    string Geometry);
+    string Geometry)
+{
+    public decimal Area => AreaHectares;
+}

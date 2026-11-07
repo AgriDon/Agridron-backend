@@ -17,6 +17,6 @@ public static class CreateParcelCommandFromResourceAssembler
             resource.Name,
             resource.Geometry,
             resource.PhenologicalStage,
-            resource.ImageUrl);
+            resource.EffectiveImageUrl);
     }
 }

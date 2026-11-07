@@ -11,6 +11,6 @@ public static class UpdateFarmCommandFromResourceAssembler
     public static UpdateFarmCommand ToCommandFromResource(long id, UpdateFarmResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
-        return new UpdateFarmCommand(id, resource.Name, resource.Location, resource.OwnerId, resource.ImageUrl);
+        return new UpdateFarmCommand(id, resource.Name, resource.Location, resource.OwnerId, resource.EffectiveImageUrl);
     }
 }

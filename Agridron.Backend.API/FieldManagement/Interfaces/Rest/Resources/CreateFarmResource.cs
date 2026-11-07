@@ -26,4 +26,11 @@ public sealed class CreateFarmResource
     [Url]
     [MaxLength(Farm.MaxImageUrlLength)]
     public string? ImageUrl { get; init; }
+
+    /// <summary>Alias for ImageUrl matching frontend conventions.</summary>
+    [Url]
+    [MaxLength(Farm.MaxImageUrlLength)]
+    public string? Image { get; init; }
+
+    public string? EffectiveImageUrl => !string.IsNullOrWhiteSpace(ImageUrl) ? ImageUrl : Image;
 }

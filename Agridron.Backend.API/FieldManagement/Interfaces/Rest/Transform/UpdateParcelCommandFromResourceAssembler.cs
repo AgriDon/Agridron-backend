@@ -18,6 +18,6 @@ public static class UpdateParcelCommandFromResourceAssembler
             resource.Name,
             resource.Geometry,
             resource.PhenologicalStage,
-            resource.ImageUrl);
+            resource.EffectiveImageUrl);
     }
 }

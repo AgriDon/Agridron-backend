@@ -8,4 +8,7 @@ public sealed record FarmResource(
     string Name,
     string Location,
     long OwnerId,
-    string? ImageUrl);
+    string? ImageUrl)
+{
+    public string? Image => ImageUrl;
+}

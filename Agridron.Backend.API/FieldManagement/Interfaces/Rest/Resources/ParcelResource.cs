@@ -21,4 +21,8 @@ public sealed record ParcelResource(
     string Geometry,
     string? PhenologicalStage,
     bool IsActive,
-    string? ImageUrl);
+    string? ImageUrl)
+{
+    public decimal Area => AreaHectares;
+    public string? Image => ImageUrl;
+}
