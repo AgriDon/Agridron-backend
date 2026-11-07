@@ -147,7 +147,7 @@ public class MissionsControllerTests
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var missionResource = okResult.Value.Should().BeOfType<MissionResource>().Subject;
-        missionResource.Status.Should().Be("Authorized");
+        missionResource.Status.Should().Be("AUTHORIZED");
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class MissionsControllerTests
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var missionResource = okResult.Value.Should().BeOfType<MissionResource>().Subject;
-        missionResource.Status.Should().Be("InProgress");
+        missionResource.Status.Should().Be("IN_PROGRESS");
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class MissionsControllerTests
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var missionResource = okResult.Value.Should().BeOfType<MissionResource>().Subject;
-        missionResource.Status.Should().Be("Completed");
+        missionResource.Status.Should().Be("COMPLETED");
         missionResource.Progress.Should().Be(100);
         missionResource.TreatedAreaHectares.Should().Be(10.0m);
     }

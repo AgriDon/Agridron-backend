@@ -1,11 +1,22 @@
 using Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Commands;
+using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FlightOperations.Interfaces.Rest.Resources;
 
 namespace Agridron.Backend.API.FlightOperations.Interfaces.Rest.Transform;
 
 public static class DroneAssembler
 {
+    public static string ToExternalString(this DroneStatus status) => status switch
+    {
+        DroneStatus.Available => "AVAILABLE",
+        DroneStatus.Assigned => "ASSIGNED",
+        DroneStatus.InFlight => "IN_FLIGHT",
+        DroneStatus.Paused => "PAUSED",
+        DroneStatus.Maintenance => "MAINTENANCE",
+        _ => status.ToString().ToUpperInvariant()
+    };
+
     public static DroneResource ToResourceFrom(Drone entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -16,7 +27,7 @@ public static class DroneAssembler
             entity.Model,
             entity.CapacityLiters,
             entity.CapacityLiters,
-            entity.Status.ToString(),
+            entity.Status.ToExternalString(),
             entity.BatteryLevel,
             entity.BatteryLevel,
             entity.FlightHours,

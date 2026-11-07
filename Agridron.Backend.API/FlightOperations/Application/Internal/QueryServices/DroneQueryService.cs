@@ -25,10 +25,13 @@ internal sealed class DroneQueryService(IDroneRepository droneRepository) : IDro
         ArgumentNullException.ThrowIfNull(query);
 
         DroneStatus? statusFilter = null;
-        if (!string.IsNullOrWhiteSpace(query.Status) &&
-            Enum.TryParse<DroneStatus>(query.Status, true, out var parsedStatus))
+        if (!string.IsNullOrWhiteSpace(query.Status))
         {
-            statusFilter = parsedStatus;
+            var clean = query.Status.Trim().Replace("_", "");
+            if (Enum.TryParse<DroneStatus>(clean, true, out var parsedStatus))
+            {
+                statusFilter = parsedStatus;
+            }
         }
 
         var drones = await droneRepository.ListFilteredAsync(

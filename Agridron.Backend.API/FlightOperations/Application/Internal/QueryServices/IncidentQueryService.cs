@@ -28,10 +28,13 @@ internal sealed class IncidentQueryService(IIncidentRepository incidentRepositor
         DroneId? droneId = query.DroneId.HasValue ? new DroneId(query.DroneId.Value) : null;
 
         IncidentSeverity? severity = null;
-        if (!string.IsNullOrWhiteSpace(query.Severity) &&
-            Enum.TryParse<IncidentSeverity>(query.Severity, true, out var parsedSeverity))
+        if (!string.IsNullOrWhiteSpace(query.Severity))
         {
-            severity = parsedSeverity;
+            var cleanSeverity = query.Severity.Trim().Replace("_", "");
+            if (Enum.TryParse<IncidentSeverity>(cleanSeverity, true, out var parsedSeverity))
+            {
+                severity = parsedSeverity;
+            }
         }
 
         var incidents = await incidentRepository.ListFilteredAsync(

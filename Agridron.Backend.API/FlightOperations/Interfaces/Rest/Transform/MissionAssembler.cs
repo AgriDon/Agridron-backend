@@ -1,11 +1,23 @@
 using Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Commands;
+using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FlightOperations.Interfaces.Rest.Resources;
 
 namespace Agridron.Backend.API.FlightOperations.Interfaces.Rest.Transform;
 
 public static class MissionAssembler
 {
+    public static string ToExternalString(this MissionStatus status) => status switch
+    {
+        MissionStatus.Planned => "PLANNED",
+        MissionStatus.Authorized => "AUTHORIZED",
+        MissionStatus.InProgress => "IN_PROGRESS",
+        MissionStatus.Paused => "PAUSED",
+        MissionStatus.Completed => "COMPLETED",
+        MissionStatus.Cancelled => "CANCELLED",
+        _ => status.ToString().ToUpperInvariant()
+    };
+
     public static MissionResource ToResourceFrom(Mission entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -43,7 +55,7 @@ public static class MissionAssembler
             entity.ProductName,
             entity.ProductDose,
             entity.Notes,
-            entity.Status.ToString(),
+            entity.Status.ToExternalString(),
             entity.ScheduledAt,
             entity.PlannedAreaHectares,
             entity.TreatedAreaHectares,

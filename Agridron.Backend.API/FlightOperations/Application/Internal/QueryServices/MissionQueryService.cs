@@ -28,7 +28,8 @@ internal sealed class MissionQueryService(IMissionRepository missionRepository) 
         if (!string.IsNullOrWhiteSpace(query.Status))
         {
             var normalizedStatus = query.Status.Trim();
-            if (Enum.TryParse<MissionStatus>(normalizedStatus, true, out var parsedStatus))
+            var cleanStatus = normalizedStatus.Replace("_", "");
+            if (Enum.TryParse<MissionStatus>(cleanStatus, true, out var parsedStatus))
             {
                 statusFilter = parsedStatus;
             }

@@ -1,11 +1,21 @@
 using Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Commands;
+using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FlightOperations.Interfaces.Rest.Resources;
 
 namespace Agridron.Backend.API.FlightOperations.Interfaces.Rest.Transform;
 
 public static class IncidentAssembler
 {
+    public static string ToExternalString(this IncidentSeverity severity) => severity switch
+    {
+        IncidentSeverity.Low => "LOW",
+        IncidentSeverity.Medium => "MEDIUM",
+        IncidentSeverity.High => "HIGH",
+        IncidentSeverity.Critical => "CRITICAL",
+        _ => severity.ToString().ToUpperInvariant()
+    };
+
     public static IncidentResource ToResourceFrom(Incident entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -17,7 +27,7 @@ public static class IncidentAssembler
             entity.OccurredAt,
             entity.MissionId?.Value,
             entity.DroneId?.Value,
-            entity.Severity.ToString(),
+            entity.Severity.ToExternalString(),
             entity.CreatedAt,
             entity.UpdatedAt);
     }
