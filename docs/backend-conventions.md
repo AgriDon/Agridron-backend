@@ -19,7 +19,7 @@ código en este repositorio. Si algo no está aquí, se discute en un ADR antes 
 | Base de datos | MySQL 8 |
 | Mediador | Cortex.Mediator |
 | Documentación | Swashbuckle (OpenAPI 3) |
-| Pruebas | xUnit + FluentAssertions + Testcontainers |
+| Pruebas | xUnit + FluentAssertions + MySQL 8 real |
 
 No se agregan dependencias nuevas sin justificarlo en un ADR y acordarlo con el equipo.
 
@@ -101,7 +101,7 @@ Interfaces ──▶ Application ──▶ Domain
 | Tablas | snake_case plural | `fumigation_areas` |
 | Columnas | snake_case singular | `created_at` |
 | Rutas HTTP | kebab-case plural bajo `/api/v1` | `/api/v1/fumigation-areas` |
-| Migraciones | PascalCase descriptivo | `InitialFieldManagement` |
+| Migraciones | PascalCase descriptivo | `InitialCreate` |
 
 ---
 
@@ -149,8 +149,10 @@ Interfaces ──▶ Application ──▶ Domain
 - Los comandos se nombran `CreateFarmCommand`, `UpdateParcelCommand`, `DeleteCropCommand`.
 - Las consultas se nombran `GetFarmByIdQuery`, `GetAllParcelsQuery`.
 - Los handlers devuelven `Result<T>` o `Result`.
-- Los errores esperados se modelan con un `enum` de errores por bounded context
-  (`FieldManagementError`), nunca con strings mágicos.
+- Los errores esperados se modelan con el record `Error` (`Code`, `Message`, `Type`, `Details`).
+  El `Code` es único dentro del bounded context; el `Type` (`Validation`, `NotFound`, `Conflict`,
+  `BusinessRule`, `Unexpected`) determina el código HTTP. Nunca se usan strings mágicos ni
+  excepciones para flujos esperados.
 - La transacción se confirma con `IUnitOfWork.CompleteAsync()` una sola vez por caso de uso.
 - Las consultas **no** pasan por el agregado: leen proyecciones/DTOs directamente.
 
@@ -169,23 +171,28 @@ Interfaces ──▶ Application ──▶ Domain
 - **No se crean claves foráneas entre bounded contexts.** Solo dentro del mismo BC.
   Las referencias externas son IDs con índice, sin FK.
 - Toda entidad auditable implementa `IAuditableEntity`; el interceptor llena `created_at` y
-  `updated_at`.
+  `updated_at`. Las entidades que aún no implementan la interfaz no tienen esas columnas.
 - Borrado: `DeleteBehavior.Restrict` por defecto. Nada de cascadas accidentales.
 
 ### Migraciones
 
 ```bash
-dotnet ef migrations add InitialFieldManagement \
+dotnet ef migrations add InitialCreate \
   --project Agridron.Backend.API \
-  --output-dir FieldManagement/Infrastructure/Persistence/EntityFrameworkCore/Migrations
+  --output-dir Infrastructure/Persistence/EntityFrameworkCore/Migrations
 
 dotnet ef database update --project Agridron.Backend.API
 ```
 
-- Una migración por bounded context y por cambio de esquema.
-- El nombre describe el cambio: `InitialFieldManagement`, `AddParcelSpatialIndex`.
-- Las migraciones se revisan antes de commitear: nunca se commitea una migración sin leer el SQL.
+- Una migración por cambio de esquema, en
+  `Agridron.Backend.API/Infrastructure/Persistence/EntityFrameworkCore/Migrations`.
+- El nombre describe el cambio: `InitialCreate`, `AddParcelSpatialIndex`.
+- Las migraciones se revisan antes de commitear: nunca se commitea una migración sin leer el
+  SQL. Esto es obligatorio cuando la migración incluye SQL raw (columnas espaciales, índices
+  `SPATIAL`), porque EF Core no modela esos objetos.
 - No se edita una migración ya aplicada en `develop`. Se crea otra.
+- Las migraciones están excluidas de `dotnet format` mediante `generated_code = true` en
+  `.editorconfig`.
 
 ---
 
@@ -228,7 +235,16 @@ Todos los errores usan **RFC 7807 Problem Details** (`application/problem+json`)
 }
 ```
 
-La extensión `code` viene del catálogo de errores del bounded context.
+La extensión `code` viene del catálogo de errores del bounded context y el status se deriva
+del `ErrorType`:
+
+| `ErrorType` | HTTP |
+|---|---|
+| `Validation` | `400 Bad Request` |
+| `NotFound` | `404 Not Found` |
+| `Conflict` | `409 Conflict` |
+| `BusinessRule` | `422 Unprocessable Entity` |
+| `Unexpected` | `500 Internal Server Error` |
 
 ### Paginación
 
@@ -276,15 +292,18 @@ La extensión `code` viene del catálogo de errores del bounded context.
 |---|---|---|
 | Unitarias de dominio | xUnit + FluentAssertions | invariantes, value objects, máquinas de estado |
 | Unitarias de aplicación | xUnit + mocks | orquestación, errores esperados |
-| Integración de persistencia | Testcontainers MySQL | mapeos, migraciones, repositorios |
+| Integración de persistencia | MySQL 8 real (`agridron_test_db`) | mapeos, migraciones, repositorios |
 | Integración de API | `WebApplicationFactory` | rutas, códigos, contrato JSON |
 
 Convenciones:
 
-- Nombre: `Metodo_DeberiaResultado_CuandoCondicion`.
+- Nombre: `Metodo_ShouldResultado` (`Metodo_ShouldResultadoAsync` si es asíncrono).
 - Estructura AAA (`Arrange`, `Act`, `Assert`) con comentarios de sección.
 - Un archivo de pruebas por clase bajo prueba.
-- Sin `Thread.Sleep` ni dependencias de red reales.
+- Las pruebas unitarias no usan red ni base de datos. Las de persistencia usan
+  `MySqlFactAttribute`, que las omite si no hay un servidor MySQL accesible; la cadena de
+  conexión se sobreescribe con `AGRIDRON_TEST_CONNECTION`.
+- Sin `Thread.Sleep` ni esperas artificiales.
 
 ---
 

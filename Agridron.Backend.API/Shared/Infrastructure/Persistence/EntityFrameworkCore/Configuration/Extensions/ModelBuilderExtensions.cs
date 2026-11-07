@@ -15,28 +15,55 @@ public static class ModelBuilderExtensions
     {
         foreach (var entity in builder.Model.GetEntityTypes())
         {
+            if (entity.IsOwned())
+            {
+                foreach (var property in entity.GetProperties())
+                {
+                    if (!property.IsPrimaryKey())
+                    {
+                        property.SetColumnName(property.GetColumnName().ToSnakeCase());
+                    }
+                }
+
+                continue;
+            }
+
             var tableName = entity.GetTableName();
-            if (!string.IsNullOrEmpty(tableName)) entity.SetTableName(tableName.ToPlural().ToSnakeCase());
+            if (!string.IsNullOrEmpty(tableName))
+            {
+                entity.SetTableName(tableName.ToPlural().ToSnakeCase());
+            }
 
             foreach (var property in entity.GetProperties())
+            {
                 property.SetColumnName(property.GetColumnName().ToSnakeCase());
+            }
 
             foreach (var key in entity.GetKeys())
             {
                 var keyName = key.GetName();
-                if (!string.IsNullOrEmpty(keyName)) key.SetName(keyName.ToSnakeCase());
+                if (!string.IsNullOrEmpty(keyName))
+                {
+                    key.SetName(keyName.ToSnakeCase());
+                }
             }
 
             foreach (var foreignKey in entity.GetForeignKeys())
             {
                 var foreignKeyName = foreignKey.GetConstraintName();
-                if (!string.IsNullOrEmpty(foreignKeyName)) foreignKey.SetConstraintName(foreignKeyName.ToSnakeCase());
+                if (!string.IsNullOrEmpty(foreignKeyName))
+                {
+                    foreignKey.SetConstraintName(foreignKeyName.ToSnakeCase());
+                }
             }
 
             foreach (var index in entity.GetIndexes())
             {
                 var indexDatabaseName = index.GetDatabaseName();
-                if (!string.IsNullOrEmpty(indexDatabaseName)) index.SetDatabaseName(indexDatabaseName.ToSnakeCase());
+                if (!string.IsNullOrEmpty(indexDatabaseName))
+                {
+                    index.SetDatabaseName(indexDatabaseName.ToSnakeCase());
+                }
             }
         }
     }

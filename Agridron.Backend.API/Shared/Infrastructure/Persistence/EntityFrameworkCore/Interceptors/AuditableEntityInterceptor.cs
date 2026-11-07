@@ -29,14 +29,24 @@ public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 
     private static void ApplyAuditTimestamps(DbContext? context)
     {
-        if (context is null) return;
+        if (context is null)
+        {
+            return;
+        }
 
         var now = DateTimeOffset.UtcNow;
 
         foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
-            if (entry.State is EntityState.Added or EntityState.Modified) entry.Entity.UpdatedAt = now;
-            if (entry.State == EntityState.Added) entry.Entity.CreatedAt ??= now;
+            if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
+            }
+
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt ??= now;
+            }
         }
     }
 }

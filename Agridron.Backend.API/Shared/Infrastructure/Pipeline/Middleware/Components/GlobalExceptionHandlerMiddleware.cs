@@ -1,5 +1,6 @@
-using System.Net.Mime;
 using System.Text.Json;
+using Agridron.Backend.API.Shared.Domain.Model.Exceptions;
+using Agridron.Backend.API.Shared.Interfaces.Rest.ProblemDetails;
 using Agridron.Backend.API.Shared.Resources;
 using Agridron.Backend.API.Shared.Resources.Errors;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,11 @@ public class GlobalExceptionHandlerMiddleware(
             logger.LogWarning(ex, "Request was cancelled: {Message}", ex.Message);
             await HandleOperationCanceledExceptionAsync(context, ex);
         }
+        catch (DomainException ex)
+        {
+            logger.LogInformation(ex, "Domain rule violated: {Code}", ex.Error.Code);
+            await HandleDomainExceptionAsync(context, ex);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
@@ -42,16 +48,18 @@ public class GlobalExceptionHandlerMiddleware(
 
     private async Task HandleOperationCanceledExceptionAsync(HttpContext context, OperationCanceledException exception)
     {
-        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = StatusCodes.Status409Conflict;
 
         var problemDetails = new ProblemDetails
         {
+            Type = "https://httpstatuses.com/409",
             Status = StatusCodes.Status409Conflict,
             Title = _errorLocalizer["OperationCancelled"],
             Detail = _errorLocalizer["OperationCancelled"],
             Instance = context.Request.Path
         };
+        problemDetails.Extensions["code"] = "OPERATION_CANCELLED";
 
         var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonSerializer.Serialize(problemDetails, jsonOptions);
@@ -59,18 +67,31 @@ public class GlobalExceptionHandlerMiddleware(
         await context.Response.WriteAsync(result);
     }
 
+    private async Task HandleDomainExceptionAsync(HttpContext context, DomainException exception)
+    {
+        var problemDetails = exception.Error.ToProblemDetails(context);
+
+        context.Response.ContentType = "application/problem+json";
+        context.Response.StatusCode = problemDetails.Status!.Value;
+
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, jsonOptions));
+    }
+
     private async Task HandleGenericExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
         var problemDetails = new ProblemDetails
         {
+            Type = "https://httpstatuses.com/500",
             Status = StatusCodes.Status500InternalServerError,
             Title = _commonLocalizer["InternalServerError"],
             Detail = _errorLocalizer["GenericError"],
             Instance = context.Request.Path
         };
+        problemDetails.Extensions["code"] = "UNEXPECTED_ERROR";
 
         var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonSerializer.Serialize(problemDetails, jsonOptions);

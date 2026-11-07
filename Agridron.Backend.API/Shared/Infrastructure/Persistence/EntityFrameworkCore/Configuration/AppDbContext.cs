@@ -1,5 +1,4 @@
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
-using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -10,14 +9,6 @@ namespace Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFramework
 /// <param name="options">The options for the database context.</param>
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
-    /// <inheritdoc />
-    protected override void OnConfiguring(DbContextOptionsBuilder builder)
-    {
-        // Apply audit timestamp interceptor for all IAuditableEntity implementations
-        builder.AddInterceptors(new AuditableEntityInterceptor());
-        base.OnConfiguring(builder);
-    }
-
     /// <summary>
     ///     On creating the database model.
     /// </summary>
@@ -26,7 +17,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
 
-        // Bounded context entity configurations will be applied here via extensions
+        // Every bounded context declares its mappings as IEntityTypeConfiguration<T>, so the
+        // context does not need to be edited when a new bounded context is added.
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();

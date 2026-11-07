@@ -23,15 +23,24 @@ Las parcelas se representan como GeoJSON (`Polygon`) y el frontend ya envía ese
 
 ## Decisión
 
-Mantener `MySql.EntityFrameworkCore`. El GeoJSON se guarda en `parcels.geometry` (`LONGTEXT`)
-y una migración agrega una columna generada:
+Mantener `MySql.EntityFrameworkCore`. El GeoJSON se guarda en `geometry_json` (`LONGTEXT`) y la
+migración inicial agrega una columna generada y su índice espacial:
 
 ```sql
-ALTER TABLE parcels
-  ADD COLUMN geom GEOMETRY SRID 4326
-    AS (ST_GeomFromGeoJSON(geometry)) STORED,
-  ADD SPATIAL INDEX ix_parcels_geom (geom);
+ALTER TABLE `parcels`
+  ADD COLUMN `geometry_native` GEOMETRY
+    GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`)) STORED NOT NULL;
+CREATE SPATIAL INDEX `sx_parcels_geometry` ON `parcels` (`geometry_native`);
+
+ALTER TABLE `fumigation_areas`
+  ADD COLUMN `geometry_native` GEOMETRY
+    GENERATED ALWAYS AS (ST_GeomFromGeoJSON(`geometry_json`)) STORED NOT NULL;
+CREATE SPATIAL INDEX `sx_fumigation_areas_geometry` ON `fumigation_areas` (`geometry_native`);
 ```
+
+`ST_GeomFromGeoJSON` se invoca con un solo argumento: MySQL 8 rechaza el segundo argumento
+numérico y la función ya devuelve geometrías con SRID 4326. La columna se declara `STORED NOT
+NULL` porque el índice `SPATIAL` exige una columna almacenada y no nula.
 
 ## Consecuencias
 

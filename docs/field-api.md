@@ -1,190 +1,193 @@
 # Field Management — contrato HTTP
 
-Base URL: `http://localhost:5000/api/v1`
+Base: `/api/v1`. Todos los cuerpos son JSON (`application/json`) y los errores usan
+**RFC 7807 Problem Details** (`application/problem+json`). Las rutas siguen la convención
+kebab-case del proyecto.
 
-Todos los recursos usan **camelCase** en JSON. Los errores usan **RFC 7807** (`application/problem+json`).
-Las colecciones se devuelven como array plano e incluyen la cabecera `X-Total-Count`.
+Todos los identificadores son `long` y las áreas se devuelven en **hectáreas** con dos
+decimales. La geometría viaja como **string GeoJSON** (`Polygon`) y el servidor calcula el área;
+el cliente nunca envía `areaHectares`.
 
-Unidades: `area` se expresa en **hectáreas (ha)**. `geometry` es un **string** con GeoJSON
-(tipo `Polygon`), tal como lo envía el frontend.
+## Fincas — `/api/v1/farms`
 
----
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `GET` | `/farms` | Lista fincas; filtro opcional `ownerId` | `200` |
+| `GET` | `/farms/{id}` | Obtiene una finca | `200` |
+| `POST` | `/farms` | Registra una finca | `201` + `Location` |
+| `PUT` | `/farms/{id}` | Reemplaza los datos de una finca | `200` |
+| `DELETE` | `/farms/{id}` | Elimina una finca sin parcelas | `204` |
 
-## Farms
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/farms` | Lista fincas. Acepta `?page=&size=&ownerId=` |
-| `GET` | `/farms/{id}` | Obtiene una finca |
-| `POST` | `/farms` | Crea una finca |
-| `PUT` | `/farms/{id}` | Actualiza una finca |
-| `DELETE` | `/farms/{id}` | Elimina una finca sin parcelas |
-
-### FarmResource
+`FarmResource`:
 
 ```json
 {
   "id": 1,
   "name": "Finca San Rafael",
   "location": "Ica, Peru",
-  "ownerId": 1,
-  "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600"
+  "ownerId": 12,
+  "imageUrl": "https://cdn.example.com/farms/san-rafael.jpg"
 }
 ```
 
-### CreateFarmResource
+`POST`/`PUT` reciben `name`, `location`, `ownerId` e `imageUrl` (opcional). `imageUrl` debe ser
+una URL absoluta `http` o `https`. `DELETE` responde `409 Conflict` con
+`FarmHasParcels` cuando la finca todavía tiene parcelas.
+
+## Cultivos — `/api/v1/crops`
+
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `GET` | `/crops` | Lista cultivos | `200` |
+| `GET` | `/crops/{id}` | Obtiene un cultivo | `200` |
+| `POST` | `/crops` | Registra un cultivo | `201` + `Location` |
+| `PUT` | `/crops/{id}` | Actualiza un cultivo | `200` |
+| `DELETE` | `/crops/{id}` | Elimina un cultivo sin parcelas | `204` |
+
+`CropResource`:
 
 ```json
 {
-  "name": "Finca San Rafael",
-  "location": "Ica, Peru",
-  "ownerId": 1,
-  "image": "https://example.com/farm.jpg"
-}
-```
-
-Reglas: `name` obligatorio (1–120), `location` obligatorio (1–200), `ownerId` > 0,
-`image` opcional (URL, máximo 500 caracteres).
-
-`DELETE` devuelve `409 Conflict` si la finca tiene parcelas.
-
----
-
-## Parcels
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/parcels` | Lista parcelas. Acepta `?farmId=&cropId=&page=&size=` |
-| `GET` | `/parcels/{id}` | Obtiene una parcela |
-| `POST` | `/parcels` | Crea una parcela |
-| `PUT` | `/parcels/{id}` | Actualiza una parcela |
-| `DELETE` | `/parcels/{id}` | Elimina una parcela sin áreas de fumigación |
-
-### ParcelResource
-
-```json
-{
-  "id": 1,
-  "name": "Parcela Norte",
-  "area": 12.5,
-  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-76.14,-14.07],[-76.13,-14.07],[-76.13,-14.06],[-76.14,-14.06],[-76.14,-14.07]]]}",
-  "farmId": 1,
-  "cropId": 1,
-  "image": "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600"
-}
-```
-
-### CreateParcelResource
-
-```json
-{
-  "name": "Parcela Norte",
-  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-76.14,-14.07],[-76.13,-14.07],[-76.13,-14.06],[-76.14,-14.06],[-76.14,-14.07]]]}",
-  "farmId": 1,
-  "cropId": 1,
-  "image": "https://example.com/parcel.jpg"
-}
-```
-
-`area` es **calculada por el backend** a partir de `geometry`; si el cliente la envía, se ignora.
-Reglas: polígono válido (ver abajo), `farmId` y `cropId` existentes.
-
-### Validación de polígono
-
-- JSON válido con `type = "Polygon"`.
-- `coordinates` es un array con al menos un anillo.
-- El primer anillo (exterior) tiene al menos 4 posiciones y está cerrado (primera = última).
-- Cada posición es `[longitud, latitud]` con longitud ∈ [-180, 180] y latitud ∈ [-90, 90].
-- El área calculada debe ser mayor que 0 y menor o igual a 100 000 ha.
-
----
-
-## Crops
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/crops` | Lista cultivos |
-| `GET` | `/crops/{id}` | Obtiene un cultivo |
-| `POST` | `/crops` | Crea un cultivo |
-| `PUT` | `/crops/{id}` | Actualiza un cultivo |
-| `DELETE` | `/crops/{id}` | Elimina un cultivo sin parcelas |
-
-### CropResource
-
-```json
-{
-  "id": 1,
+  "id": 3,
   "name": "Maiz",
-  "variety": "Ambar"
+  "variety": "Amarillo"
 }
 ```
 
-Reglas: `name` obligatorio (1–80), `variety` obligatorio (1–80). La combinación
-`name + variety` es única (`409 Conflict` si se repite).
+La combinación `name` + `variety` es única. `POST`/`PUT` responden `409 Conflict` con
+`CropAlreadyExists` si ya existe. `DELETE` responde `409 Conflict` con `CropHasParcels` si el
+cultivo está asignado a alguna parcela.
 
----
+## Parcelas — `/api/v1/parcels`
 
-## Fumigation areas
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `GET` | `/parcels` | Lista parcelas; filtro opcional `farmId` | `200` |
+| `GET` | `/parcels/{id}` | Obtiene una parcela | `200` |
+| `POST` | `/parcels` | Registra una parcela | `201` + `Location` |
+| `PUT` | `/parcels/{id}` | Reemplaza los datos de una parcela | `200` |
+| `DELETE` | `/parcels/{id}` | Inactiva una parcela (soft-delete) sin áreas de fumigación | `204` |
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/fumigation-areas` | Lista áreas. Acepta `?parcelId=` |
-| `GET` | `/fumigation-areas/{id}` | Obtiene un área |
-| `POST` | `/fumigation-areas` | Crea un área |
-| `PUT` | `/fumigation-areas/{id}` | Actualiza un área |
-| `DELETE` | `/fumigation-areas/{id}` | Elimina un área |
-
-### FumigationAreaResource
+`ParcelResource`:
 
 ```json
 {
-  "id": 1,
-  "parcelId": 1,
-  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-76.135,-14.065],[-76.133,-14.065],[-76.133,-14.063],[-76.135,-14.063],[-76.135,-14.065]]]}",
-  "area": 3.2
+  "id": 10,
+  "farmId": 1,
+  "cropId": 3,
+  "name": "Lote Norte",
+  "areaHectares": 12.50,
+  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.49,-0.2],[-78.49,-0.19],[-78.5,-0.19],[-78.5,-0.2]]]}",
+  "phenologicalStage": "Floracion",
+  "isActive": true,
+  "imageUrl": null
 }
 ```
 
-Reglas: `parcelId` existente; polígono válido; `area` calculada ≤ área de la parcela
-(si se excede → `422 Unprocessable Entity`).
+`POST`/`PUT` reciben `farmId`, `cropId`, `name`, `geometry`, `phenologicalStage` (opcional, máx. 60 caracteres) e `imageUrl` (opcional). El `farmId`
+y el `cropId` deben existir (`404` con `FarmNotFound` / `CropNotFound`). `geometry` debe ser un
+`Polygon` cerrado con al menos cuatro posiciones y coordenadas válidas; si no, se devuelve
+`400` con el código de validación correspondiente. El área resultante debe ser mayor que cero y
+como máximo 100 000 ha (`ParcelAreaOutOfRange`). `DELETE` desactiva lógicamente la parcela (`isActive = false`) manteniendo el histórico de misiones operativas, y responde `409 Conflict` con
+`ParcelHasFumigationAreas` si la parcela todavía tiene áreas de fumigación.
 
----
+## Áreas de fumigación — `/api/v1/fumigation-areas`
 
-## Catálogo de errores
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `GET` | `/fumigation-areas` | Lista áreas; filtro opcional `parcelId` | `200` |
+| `GET` | `/fumigation-areas/{id}` | Obtiene un área | `200` |
+| `POST` | `/fumigation-areas` | Define un área dentro de una parcela | `201` + `Location` |
+| `PUT` | `/fumigation-areas/{id}` | Redefine el polígono y la parcela | `200` |
+| `DELETE` | `/fumigation-areas/{id}` | Elimina el área | `204` |
 
-| `code` | HTTP | Significado |
-|---|---|---|
-| `FarmNotFound` | 404 | La finca no existe |
-| `ParcelNotFound` | 404 | La parcela no existe |
-| `CropNotFound` | 404 | El cultivo no existe |
-| `FumigationAreaNotFound` | 404 | El área de fumigación no existe |
-| `FarmNameRequired` | 400 | El nombre de la finca está vacío |
-| `FarmLocationRequired` | 400 | La ubicación está vacía |
-| `FarmOwnerRequired` | 400 | `ownerId` inválido |
-| `CropNameRequired` | 400 | El nombre del cultivo está vacío |
-| `CropVarietyRequired` | 400 | La variedad está vacía |
-| `CropAlreadyExists` | 409 | Ya existe `name + variety` |
-| `ParcelNameRequired` | 400 | El nombre de la parcela está vacío |
-| `ParcelGeometryInvalid` | 400 | El GeoJSON no es un polígono válido |
-| `ParcelAreaOutOfRange` | 400 | El área calculada no es razonable |
-| `FarmHasParcels` | 409 | No se puede borrar una finca con parcelas |
-| `CropHasParcels` | 409 | No se puede borrar un cultivo en uso |
-| `ParcelHasFumigationAreas` | 409 | No se puede borrar una parcela con áreas |
-| `FumigationAreaExceedsParcelArea` | 422 | El área supera la de la parcela |
-| `InvalidPolygonType` | 400 | `type` distinto de `Polygon` |
-| `PolygonRingNotClosed` | 400 | El anillo no cierra |
-| `PolygonTooFewPoints` | 400 | Menos de 4 posiciones |
-| `CoordinateOutOfRange` | 400 | Latitud/longitud fuera de rango |
-
-### Ejemplo de error
+`FumigationAreaResource`:
 
 ```json
 {
-  "type": "https://httpstatuses.com/422",
-  "title": "Unprocessable Entity",
-  "status": 422,
-  "detail": "The fumigation area exceeds the parcel area.",
-  "instance": "/api/v1/fumigation-areas",
-  "code": "FumigationAreaExceedsParcelArea"
+  "id": 5,
+  "parcelId": 10,
+  "areaHectares": 3.20,
+  "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.495,-0.2],[-78.495,-0.195],[-78.5,-0.195],[-78.5,-0.2]]]}"
 }
 ```
+
+`POST`/`PUT` reciben `parcelId` y `geometry`. La parcela debe existir (`404` con
+`ParcelNotFound`) y el área no puede superar el área de la parcela: en ese caso se devuelve
+`422 Unprocessable Entity` con `FumigationAreaExceedsParcelArea`.
+
+## Paginación
+
+Las colecciones aceptan `?page=0&size=20`:
+
+- Sin `page` ni `size`: se devuelve la colección completa (compatibilidad con el frontend).
+- Con paginación: se devuelve la página solicitada y la cabecera `X-Total-Count` con el total
+  de registros.
+- `size` se limita a `1..100`; valores negativos de `page` se normalizan a `0`.
+
+## Errores
+
+Formato:
+
+```json
+{
+  "type": "https://httpstatuses.com/404",
+  "title": "Resource Not Found",
+  "status": 404,
+  "detail": "Farm with id 42 was not found.",
+  "instance": "/api/v1/farms/42",
+  "code": "FarmNotFound"
+}
+```
+
+| `ErrorType` | HTTP |
+|---|---|
+| `Validation` | `400 Bad Request` |
+| `NotFound` | `404 Not Found` |
+| `Conflict` | `409 Conflict` |
+| `BusinessRule` | `422 Unprocessable Entity` |
+| `Unexpected` | `500 Internal Server Error` |
+
+Códigos del bounded context: `FarmNameRequired`, `FarmNameTooLong`, `FarmLocationRequired`,
+`FarmLocationTooLong`, `FarmOwnerInvalid`, `FarmImageUrlInvalid`, `FarmNotFound`,
+`FarmHasParcels`, `CropNameRequired`, `CropNameTooLong`, `CropVarietyRequired`,
+`CropVarietyTooLong`, `CropNotFound`, `CropAlreadyExists`, `CropHasParcels`,
+`ParcelNameRequired`, `ParcelNameTooLong`, `ParcelImageUrlInvalid`, `ParcelAreaOutOfRange`,
+`ParcelFarmInvalid`, `ParcelCropInvalid`, `ParcelNotFound`, `ParcelGeometryInvalid`,
+`ParcelHasFumigationAreas`, `FumigationAreaHasNoArea`, `FumigationAreaParcelInvalid`,
+`FumigationAreaNotFound`, `FumigationAreaExceedsParcelArea`, `PolygonGeoJsonRequired`,
+`InvalidPolygonType`, `PolygonCoordinatesMissing`, `PolygonTooFewPoints`,
+`PolygonRingNotClosed`, `CoordinateOutOfRange`, `PolygonGeoJsonInvalid`.
+
+## Ejemplo completo
+
+```bash
+# 1. Crear la finca
+curl -X POST http://localhost:5000/api/v1/farms \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Finca San Rafael","location":"Ica, Peru","ownerId":12}'
+
+# 2. Crear el cultivo
+curl -X POST http://localhost:5000/api/v1/crops \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Maiz","variety":"Amarillo"}'
+
+# 3. Crear la parcela
+curl -X POST http://localhost:5000/api/v1/parcels \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "farmId": 1,
+    "cropId": 1,
+    "name": "Lote Norte",
+    "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.49,-0.2],[-78.49,-0.19],[-78.5,-0.19],[-78.5,-0.2]]]}"
+  }'
+
+# 4. Definir el área de fumigación
+curl -X POST http://localhost:5000/api/v1/fumigation-areas \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "parcelId": 1,
+    "geometry": "{\"type\":\"Polygon\",\"coordinates\":[[[-78.5,-0.2],[-78.495,-0.2],[-78.495,-0.195],[-78.5,-0.195],[-78.5,-0.2]]]}"
+  }'
+```
+

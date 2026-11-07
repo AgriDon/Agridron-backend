@@ -31,9 +31,22 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
     }
 
     /// <inheritdoc />
-    public async Task<TEntity?> FindByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<TEntity?> FindByIdAsync(long id, CancellationToken cancellationToken = default)
     {
-        return await Context.Set<TEntity>().FindAsync(new object[] { id }, cancellationToken);
+        var keyProperty = Context.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties[0];
+        var keyValue = keyProperty is null || keyProperty.ClrType == typeof(long)
+            ? id
+            : CreateConvertedKey(keyProperty.ClrType, id);
+
+        return await Context.Set<TEntity>().FindAsync(new object[] { keyValue }, cancellationToken);
+    }
+
+    private static object CreateConvertedKey(Type keyType, long id)
+    {
+        return Activator.CreateInstance(keyType, id)
+               ?? throw new InvalidOperationException(
+                   $"Unable to create the key type '{keyType.Name}' from the value {id}. " +
+                   "Converted keys must expose a constructor that accepts the database identifier.");
     }
 
     /// <inheritdoc />
