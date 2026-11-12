@@ -1,0 +1,12 @@
+**/.git
+**/.github
+**/.vs
+**/.idea
+**/.vscode
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/TestResults
+tests/
+appsettings.json
