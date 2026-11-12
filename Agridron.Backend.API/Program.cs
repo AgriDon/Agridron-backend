@@ -157,15 +157,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     var context = services.GetRequiredService<AppDbContext>();
     try
     {
         context.Database.Migrate();
+        await Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.DatabaseSeeder.SeedAsync(context, logger);
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogWarning(ex, "An error occurred while migrating the database. Ensure MySQL server is running.");
+        logger.LogWarning(ex, "An error occurred while migrating or seeding the database. Ensure MySQL server is running.");
     }
 }
 
