@@ -17,3 +17,26 @@ public sealed record UpdateDroneCommand(
     DateTimeOffset? NextMaintenanceDate = null);
 
 public sealed record DeleteDroneCommand(long Id);
+
+/**
+ * Takes an available drone out of operation for a planned maintenance
+ */
+public sealed record SendDroneToMaintenanceCommand(long Id);
+
+/**
+ * Registers a finished maintenance or repair and returns the drone to service
+ */
+public sealed record CompleteDroneMaintenanceCommand(
+    long Id,
+    DateTimeOffset MaintenanceDate,
+    DateTimeOffset? NextMaintenanceDate = null);
+
+
+/**
+ * Reports a mechanical failure: the drone goes out of service and an incident is recorded
+ */
+public sealed record ReportDroneFailureCommand(
+    long Id,
+    string Description,
+    DateTimeOffset? OccurredAt = null
+            );

@@ -9,12 +9,13 @@ namespace Agridron.Backend.API.Tests.FlightOperations.Application;
 public class DroneCommandServiceTests
 {
     private readonly FakeDroneRepository _droneRepository = new();
+    private readonly FakeIncidentRepository _incidentRepository = new();
     private readonly FakeUnitOfWork _unitOfWork = new();
     private readonly DroneCommandService _service;
 
     public DroneCommandServiceTests()
     {
-        _service = new DroneCommandService(_droneRepository, _unitOfWork);
+        _service = new DroneCommandService(_droneRepository, _incidentRepository,_unitOfWork);
     }
 
     [Fact]
