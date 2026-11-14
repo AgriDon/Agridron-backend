@@ -18,5 +18,10 @@ public enum DroneStatus
     Paused = 4,
 
     /// <summary>Under technical maintenance or repairing.</summary>
-    Maintenance = 5
+    Maintenance = 5,
+
+    /// <summary>A mechanical failure was reported; cannot fly until it is repaired (DR-006).</summary>
+    OutOfService = 6
+
+
 }
