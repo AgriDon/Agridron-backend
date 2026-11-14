@@ -118,4 +118,75 @@ public class DroneCommandServiceTests
         result.Error!.Code.Should().Be("DroneBusy");
         drone.IsActive.Should().BeTrue();
     }
+
+        [Fact]
+    public async Task Handle_SendDroneToMaintenanceCommand_WhenAvailable_ShouldSetMaintenance()
+    {
+        // Arrange
+        var drone = new Drone("SN-MNT-01", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+
+        // Act
+        var result = await _service.Handle(new SendDroneToMaintenanceCommand(drone.Id.Value));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be(DroneStatus.Maintenance);
+    }
+
+    [Fact]
+    public async Task Handle_CompleteDroneMaintenanceCommand_WhenInMaintenance_ShouldReturnToAvailable()
+    {
+        // Arrange
+        var drone = new Drone("SN-MNT-02", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+        drone.SendToMaintenance();
+        var date = new DateTimeOffset(2026, 11, 13, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(drone.Id.Value, date, date.AddMonths(3)));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be(DroneStatus.Available);
+        result.Value.LastMaintenanceDate.Should().Be(date);
+        result.Value.NextMaintenanceDate.Should().Be(date.AddMonths(3));
+    }
+
+    [Fact]
+    public async Task Handle_ReportDroneFailureCommand_ShouldSetOutOfServiceAndRecordIncident()
+    {
+        // Arrange
+        var drone = new Drone("SN-FAIL-01", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+
+        // Act
+        var result = await _service.Handle(new ReportDroneFailureCommand(drone.Id.Value, "La batería se descarga muy rápido"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be(DroneStatus.OutOfService);
+
+        var incidents = await _incidentRepository.ListFilteredAsync(null, drone.Id, IncidentTypes.EquipmentFailure, null);
+        incidents.Should().ContainSingle();
+        incidents[0].Description.Should().Be("La batería se descarga muy rápido");
+        incidents[0].Severity.Should().Be(IncidentSeverity.High);
+    }
+
+    [Fact]
+    public async Task Handle_ReportDroneFailureCommand_WithoutDescription_ShouldFail()
+    {
+        // Arrange
+        var drone = new Drone("SN-FAIL-02", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+
+        // Act
+        var result = await _service.Handle(new ReportDroneFailureCommand(drone.Id.Value, "   "));
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error!.Code.Should().Be("DroneFailureDescriptionRequired");
+        drone.Status.Should().Be(DroneStatus.Available);
+    }
+
 }
