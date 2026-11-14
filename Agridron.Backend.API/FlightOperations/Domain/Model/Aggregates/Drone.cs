@@ -205,6 +205,13 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
         ChangeStatus(DroneStatus.Available);
     }
 
+    /***
+     * Summary of 3 business rules up
+     * to send drone to maintenance only from status available
+     * report failure from any status except for in flight and out of service
+     * to complete maintenance only from out of service status
+     */
+
     public void UpdateBatteryLevel(decimal batteryLevel)
     {
         BatteryLevel = Math.Clamp(batteryLevel, 0m, 100m);
