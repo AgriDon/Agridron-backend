@@ -128,8 +128,17 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
         ChangeStatus(DroneStatus.Assigned);
     }
 
+    /**
+       * Drone with status out of service is not available to be
+       * assigned to a mission
+       */
     public void MarkInFlight()
     {
+        if (Status is DroneStatus.Maintenance or DroneStatus.OutOfService)
+        {
+            throw new DomainException(FlightOperationsErrors.DroneNotAvailable(Id.Value, Status.ToString()));
+        }
+
         ChangeStatus(DroneStatus.InFlight);
     }
 
@@ -145,21 +154,52 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
             FlightHours += addedFlightHours;
         }
 
+        if (Status is DroneStatus.Maintenance or DroneStatus.OutOfService)
+        {
+            return;
+        }
+
         ChangeStatus(DroneStatus.Available);
     }
 
+    /**
+     * takes an available drone out of operation for a planned
+     * maintenance
+     */
     public void SendToMaintenance()
     {
-        if (Status == DroneStatus.InFlight)
+        if (Status != DroneStatus.Available)
         {
             throw new DomainException(FlightOperationsErrors.DroneBusy(Id.Value, Status.ToString()));
         }
-
         ChangeStatus(DroneStatus.Maintenance);
     }
 
+    /**
+     * Marks the drone as out of service after a mechanical failure
+     * Not allowed while drone is flying or when it's already out of service
+     */
+    public void ReportFailure()
+    {
+        if (Status is DroneStatus.InFlight or DroneStatus.OutOfService)
+        {
+            throw new DomainException(FlightOperationsErrors.DroneFailureNotAllowed(Id.Value, Status.ToString()));
+        }
+
+        ChangeStatus(DroneStatus.OutOfService);
+    }
+
+
+    /**
+     * Register a finished maintenance or repair and returns the drone available to service
+     */
     public void CompleteMaintenance(DateTimeOffset maintenanceDate, DateTimeOffset? nextDate)
     {
+
+        if (Status is not (DroneStatus.Maintenance or DroneStatus.OutOfService))
+        {
+            throw new DomainException(FlightOperationsErrors.DroneNotInMaintenance(Id.Value, Status.ToString()));
+        }
         LastMaintenanceDate = maintenanceDate;
         NextMaintenanceDate = nextDate;
         ChangeStatus(DroneStatus.Available);
@@ -215,4 +255,6 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
             AddDomainEvent(new DroneStatusChangedEvent(Id.Value, oldStatus, newStatus, DateTimeOffset.UtcNow));
         }
     }
+
+
 }
