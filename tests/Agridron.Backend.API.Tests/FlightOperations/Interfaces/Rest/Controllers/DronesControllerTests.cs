@@ -18,9 +18,11 @@ public class DronesControllerTests
 
     public DronesControllerTests()
     {
-        var commandService = new DroneCommandService(_droneRepository, _unitOfWork);
+        var commandService = new DroneCommandService(_droneRepository, new FakeIncidentRepository(), _unitOfWork);
         var queryService = new DroneQueryService(_droneRepository);
         var problemDetailsFactory = new ProblemDetailsFactory(null!, null!, null!);
+
+
 
         _controller = new DronesController(commandService, queryService, problemDetailsFactory)
         {

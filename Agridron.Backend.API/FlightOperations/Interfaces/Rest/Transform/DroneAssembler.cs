@@ -14,6 +14,7 @@ public static class DroneAssembler
         DroneStatus.InFlight => "IN_FLIGHT",
         DroneStatus.Paused => "PAUSED",
         DroneStatus.Maintenance => "MAINTENANCE",
+        DroneStatus.OutOfService => "OUT_OF_SERVICE",
         _ => status.ToString().ToUpperInvariant()
     };
 

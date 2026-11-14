@@ -9,4 +9,9 @@ public interface IDroneCommandService
     Task<Result<Drone>> Handle(CreateDroneCommand command, CancellationToken cancellationToken = default);
     Task<Result<Drone>> Handle(UpdateDroneCommand command, CancellationToken cancellationToken = default);
     Task<Result> Handle(DeleteDroneCommand command, CancellationToken cancellationToken = default);
+
+    Task<Result<Drone>> Handle(SendDroneToMaintenanceCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Drone>> Handle(CompleteDroneMaintenanceCommand command, CancellationToken cancellationToken = default);
+    Task<Result<Drone>> Handle(ReportDroneFailureCommand command, CancellationToken cancellationToken = default);
+
 }

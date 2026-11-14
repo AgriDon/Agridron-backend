@@ -39,3 +39,21 @@ public sealed record UpdateDroneResource(
     string? ImageUrl,
     DateTimeOffset? LastMaintenanceDate,
     DateTimeOffset? NextMaintenanceDate);
+
+
+/**
+ * Body of POST  /api/v1/drones/{id}/maintenance/complete
+ */
+public sealed record CompleteDroneMaintenanceResource(
+    DateTimeOffset? MaintenanceDate,
+    DateTimeOffset? NextMaintenanceDate
+);
+
+/**
+ * Body of Post Drone => failure
+ * Post/api/v1/drones/{id}/failure
+ */
+public sealed record ReportDroneFailureResource(
+    string Description,
+    DateTimeOffset? OccurredAt
+);
