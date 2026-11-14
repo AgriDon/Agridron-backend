@@ -28,7 +28,7 @@ public sealed record SendDroneToMaintenanceCommand(long Id);
  */
 public sealed record CompleteDroneMaintenanceCommand(
     long Id,
-    DateTimeOffset MaintenanceDate,
+    DateTimeOffset? MaintenanceDate,
     DateTimeOffset? NextMaintenanceDate = null);
 
 

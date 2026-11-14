@@ -193,7 +193,7 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
     /**
      * Register a finished maintenance or repair and returns the drone available to service
      */
-    public void CompleteMaintenance(DateTimeOffset maintenanceDate, DateTimeOffset? nextDate)
+    public void CompleteMaintenance(DateTimeOffset? maintenanceDate, DateTimeOffset? nextDate)
     {
 
         if (Status is not (DroneStatus.Maintenance or DroneStatus.OutOfService))
