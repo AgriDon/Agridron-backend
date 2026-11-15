@@ -153,6 +153,18 @@ public static class FlightOperationsErrors
     // Incident Errors
     // ---------------------------------------------------------------------
 
+    public static readonly Error MaintenanceTechnicianRequired =
+        Error.Validation("MaintenanceTechnicianRequired", "The technician who performed the maintenance is required.");
+
+    public static readonly Error MaintenanceTechnicianTooLong =
+        Error.Validation("MaintenanceTechnicianTooLong", "The technician name cannot exceed 120 characters.");
+
+    public static readonly Error MaintenanceDescriptionTooLong =
+        Error.Validation("MaintenanceDescriptionTooLong", "The maintenance description cannot exceed 500 characters.");
+
+    public static readonly Error MaintenanceTypeInvalid =
+        Error.Validation("MaintenanceTypeInvalid", "The maintenance type must be 'preventive' or 'corrective'.");
+
     public static readonly Error IncidentTypeRequired =
         Error.Validation("IncidentTypeRequired", "The incident type is required.");
 

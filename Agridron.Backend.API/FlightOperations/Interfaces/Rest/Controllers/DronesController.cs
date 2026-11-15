@@ -158,7 +158,7 @@ public class DronesController(
 
     [HttpPost("{id:long}/maintenance/complete")]
     [SwaggerOperation(
-        Summary = "Complete drone maintenance or repair (DR-005 / DR-006)",
+        Summary = "Complete drone maintenance or repair ",
         Description = "Registers the maintenance dates of a drone in MAINTENANCE or OUT_OF_SERVICE and returns it to AVAILABLE.",
         OperationId = "CompleteDroneMaintenance")]
     [SwaggerResponse(StatusCodes.Status200OK, "Maintenance completed", typeof(DroneResource))]
@@ -179,7 +179,7 @@ public class DronesController(
 
     [HttpPost("{id:long}/failure")]
     [SwaggerOperation(
-        Summary = "Report drone failure (DR-006)",
+        Summary = "Report drone failure ",
         Description = "Records a FALLA_TECNICA incident for the drone and sets its status to OUT_OF_SERVICE until it is repaired.",
         OperationId = "ReportDroneFailure")]
     [SwaggerResponse(StatusCodes.Status200OK, "Failure reported", typeof(DroneResource))]
