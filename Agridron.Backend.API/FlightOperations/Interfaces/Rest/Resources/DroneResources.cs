@@ -46,9 +46,11 @@ public sealed record UpdateDroneResource(
  */
 public sealed record CompleteDroneMaintenanceResource(
     DateTimeOffset? MaintenanceDate,
-    DateTimeOffset? NextMaintenanceDate
+    DateTimeOffset? NextMaintenanceDate,
+    string? Technician,
+    string? Type,
+    string? Description
 );
-
 /**
  * Body of Post Drone => failure
  * Post/api/v1/drones/{id}/failure
@@ -56,4 +58,17 @@ public sealed record CompleteDroneMaintenanceResource(
 public sealed record ReportDroneFailureResource(
     string Description,
     DateTimeOffset? OccurredAt
+);
+
+/**
+ * One entry of GET /api/v1/drones/{id}/maintenance-records
+ * Date is "yyyy-MM-dd" (a calendar day, not an instant) and Type is "preventive" or "corrective".
+ */
+public sealed record MaintenanceRecordResource(
+    long Id,
+    long DroneId,
+    string Date,
+    string Type,
+    string Technician,
+    string? Description
 );

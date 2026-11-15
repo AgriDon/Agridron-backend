@@ -9,6 +9,7 @@ using Agridron.Backend.API.Shared.Application.Model;
 using Agridron.Backend.API.Shared.Interfaces.Rest.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Agridron.Backend.API.FlightOperations.Domain.Model.Errors;
 
 namespace Agridron.Backend.API.FlightOperations.Interfaces.Rest.Controllers;
 
@@ -159,17 +160,32 @@ public class DronesController(
     [HttpPost("{id:long}/maintenance/complete")]
     [SwaggerOperation(
         Summary = "Complete drone maintenance or repair ",
-        Description = "Registers the maintenance dates of a drone in MAINTENANCE or OUT_OF_SERVICE and returns it to AVAILABLE.",
+        Description = "Saves the maintenance in the drone history (technician, type, description), updates its maintenance dates " +
+                      "and returns a drone in MAINTENANCE or OUT_OF_SERVICE to AVAILABLE. A drone OUT_OF_SERVICE always gets a 'corrective' record.",
         OperationId = "CompleteDroneMaintenance")]
     [SwaggerResponse(StatusCodes.Status200OK, "Maintenance completed", typeof(DroneResource))]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Drone not found")]
     [SwaggerResponse(StatusCodes.Status409Conflict, "Drone is not in maintenance")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Technician missing or invalid maintenance type")]
     public async Task<IActionResult> CompleteDroneMaintenanceAsync(
         long id,
         [FromBody] CompleteDroneMaintenanceResource resource,
         CancellationToken cancellationToken)
     {
-        var command = new CompleteDroneMaintenanceCommand(id, resource.MaintenanceDate, resource.NextMaintenanceDate);
+
+        if (!MaintenanceRecordAssembler.TryParseType(resource.Type, out var type))
+        {
+            return problemDetailsFactory.CreateProblemDetails(this, FlightOperationsErrors.MaintenanceTypeInvalid);
+        }
+
+        var command = new CompleteDroneMaintenanceCommand(
+            id,
+            resource.MaintenanceDate,
+            resource.NextMaintenanceDate,
+            resource.Technician,
+            type,
+            resource.Description);
+
         var result = await droneCommandService.Handle(command, cancellationToken);
 
         return result.IsSuccess
@@ -200,5 +216,21 @@ public class DronesController(
     }
 
 
+    [HttpGet("{id:long}/maintenance-records")]
+    [SwaggerOperation(
+        Summary = "Get drone maintenance history",
+        Description = "Lists the maintenance and repair records of a drone, most recent first.",
+        OperationId = "GetDroneMaintenanceRecords")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Maintenance history", typeof(IEnumerable<MaintenanceRecordResource>))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Drone not found or inactive")]
+    public async Task<IActionResult> GetDroneMaintenanceRecordsAsync(long id, CancellationToken cancellationToken)
+    {
+        var query = new GetMaintenanceRecordsByDroneIdQuery(id);
+        var result = await droneQueryService.Handle(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(result.Value!.Select(MaintenanceRecordAssembler.ToResourceFrom))
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
 
 }
