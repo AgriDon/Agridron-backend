@@ -134,4 +134,71 @@ public class DronesController(
             ? NoContent()
             : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
     }
+
+
+        [HttpPost("{id:long}/maintenance")]
+    [SwaggerOperation(
+        Summary = "Send drone to maintenance ",
+        Description = "Takes an AVAILABLE drone out of operation for a planned maintenance. The drone status changes to MAINTENANCE.",
+        OperationId = "SendDroneToMaintenance")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Drone sent to maintenance", typeof(DroneResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Drone not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Drone is not available")]
+    public async Task<IActionResult> SendDroneToMaintenanceAsync(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var command = new SendDroneToMaintenanceCommand(id);
+        var result = await droneCommandService.Handle(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(DroneAssembler.ToResourceFrom(result.Value!))
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
+
+    [HttpPost("{id:long}/maintenance/complete")]
+    [SwaggerOperation(
+        Summary = "Complete drone maintenance or repair (DR-005 / DR-006)",
+        Description = "Registers the maintenance dates of a drone in MAINTENANCE or OUT_OF_SERVICE and returns it to AVAILABLE.",
+        OperationId = "CompleteDroneMaintenance")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Maintenance completed", typeof(DroneResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Drone not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Drone is not in maintenance")]
+    public async Task<IActionResult> CompleteDroneMaintenanceAsync(
+        long id,
+        [FromBody] CompleteDroneMaintenanceResource resource,
+        CancellationToken cancellationToken)
+    {
+        var command = new CompleteDroneMaintenanceCommand(id, resource.MaintenanceDate, resource.NextMaintenanceDate);
+        var result = await droneCommandService.Handle(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(DroneAssembler.ToResourceFrom(result.Value!))
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
+
+    [HttpPost("{id:long}/failure")]
+    [SwaggerOperation(
+        Summary = "Report drone failure (DR-006)",
+        Description = "Records a FALLA_TECNICA incident for the drone and sets its status to OUT_OF_SERVICE until it is repaired.",
+        OperationId = "ReportDroneFailure")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Failure reported", typeof(DroneResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Failure description is required")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Drone not found")]
+    [SwaggerResponse(StatusCodes.Status409Conflict, "Failure cannot be reported in the current status")]
+    public async Task<IActionResult> ReportDroneFailureAsync(
+        long id,
+        [FromBody] ReportDroneFailureResource resource,
+        CancellationToken cancellationToken)
+    {
+        var command = new ReportDroneFailureCommand(id, resource.Description, resource.OccurredAt);
+        var result = await droneCommandService.Handle(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(DroneAssembler.ToResourceFrom(result.Value!))
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
+
+
+
 }

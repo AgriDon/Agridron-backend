@@ -12,6 +12,7 @@ namespace Agridron.Backend.API.FlightOperations.Application.Internal.CommandServ
 
 internal sealed class DroneCommandService(
     IDroneRepository droneRepository,
+    IIncidentRepository incidentRepository,
     IUnitOfWork unitOfWork) : IDroneCommandService
 {
     public async Task<Result<Drone>> Handle(CreateDroneCommand command, CancellationToken cancellationToken = default)
@@ -96,5 +97,92 @@ internal sealed class DroneCommandService(
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return Result.Success();
+    }
+
+        public async Task<Result<Drone>> Handle(SendDroneToMaintenanceCommand command, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var drone = await droneRepository.FindByIdAsync(command.Id, cancellationToken);
+        if (drone is null || !drone.IsActive)
+        {
+            return Result<Drone>.Failure(FlightOperationsErrors.DroneNotFound(command.Id));
+        }
+
+        try
+        {
+            drone.SendToMaintenance();
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return Result<Drone>.Success(drone);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Drone>.Failure(ex.Error);
+        }
+    }
+
+    public async Task<Result<Drone>> Handle(CompleteDroneMaintenanceCommand command, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var drone = await droneRepository.FindByIdAsync(command.Id, cancellationToken);
+        if (drone is null || !drone.IsActive)
+        {
+            return Result<Drone>.Failure(FlightOperationsErrors.DroneNotFound(command.Id));
+        }
+
+        try
+        {
+            drone.CompleteMaintenance(command.MaintenanceDate, command.NextMaintenanceDate);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return Result<Drone>.Success(drone);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Drone>.Failure(ex.Error);
+        }
+    }
+
+    public async Task<Result<Drone>> Handle(ReportDroneFailureCommand command, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        if (string.IsNullOrWhiteSpace(command.Description))
+        {
+            return Result<Drone>.Failure(FlightOperationsErrors.DroneFailureDescriptionRequired);
+        }
+
+        var drone = await droneRepository.FindByIdAsync(command.Id, cancellationToken);
+        if (drone is null || !drone.IsActive)
+        {
+            return Result<Drone>.Failure(FlightOperationsErrors.DroneNotFound(command.Id));
+        }
+
+        try
+        {
+            drone.ReportFailure();
+
+            var incident = new Incident(
+                IncidentTypes.EquipmentFailure,
+                command.Description.Trim(),
+                command.OccurredAt ?? DateTimeOffset.UtcNow,
+                missionId: null,
+                droneId: drone.Id,
+                severity: IncidentSeverity.High);
+
+            await incidentRepository.AddAsync(incident, cancellationToken);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            incident.MarkAsCreated();
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return Result<Drone>.Success(drone);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Drone>.Failure(ex.Error);
+        }
     }
 }

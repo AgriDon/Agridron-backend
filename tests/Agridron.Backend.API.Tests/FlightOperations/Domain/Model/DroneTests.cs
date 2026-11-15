@@ -151,4 +151,132 @@ public sealed class DroneTests
         act.Should().Throw<DomainException>()
             .Which.Error.Code.Should().Be("DroneBusy");
     }
+
+
+    /////////////////
+     [Fact]
+    public void SendToMaintenance_WhenAssigned_ShouldThrowConflict()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.AssignToMission();
+
+        // Act
+        var act = () => drone.SendToMaintenance();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("DroneBusy");
+    }
+
+    [Theory]
+    [InlineData(DroneStatus.Available)]
+    [InlineData(DroneStatus.Assigned)]
+    [InlineData(DroneStatus.Maintenance)]
+    public void ReportFailure_ShouldSetOutOfService(DroneStatus initialStatus)
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        if (initialStatus == DroneStatus.Assigned) drone.AssignToMission();
+        if (initialStatus == DroneStatus.Maintenance) drone.SendToMaintenance();
+
+        // Act
+        drone.ReportFailure();
+
+        // Assert
+        drone.Status.Should().Be(DroneStatus.OutOfService);
+    }
+
+    [Fact]
+    public void ReportFailure_WhenInFlight_ShouldThrowConflict()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.AssignToMission();
+        drone.MarkInFlight();
+
+        // Act
+        var act = () => drone.ReportFailure();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("DroneFailureNotAllowed");
+    }
+
+    [Fact]
+    public void ReportFailure_WhenAlreadyOutOfService_ShouldThrowConflict()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.ReportFailure();
+
+        // Act
+        var act = () => drone.ReportFailure();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("DroneFailureNotAllowed");
+    }
+
+    [Fact]
+    public void CompleteMaintenance_WhenOutOfService_ShouldReturnToAvailable()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.ReportFailure();
+        var date = DateTimeOffset.UtcNow;
+
+        // Act
+        drone.CompleteMaintenance(date, date.AddMonths(3));
+
+        // Assert
+        drone.Status.Should().Be(DroneStatus.Available);
+        drone.LastMaintenanceDate.Should().Be(date);
+    }
+
+    [Fact]
+    public void CompleteMaintenance_WhenAvailable_ShouldThrowConflict()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+
+        // Act
+        var act = () => drone.CompleteMaintenance(DateTimeOffset.UtcNow, null);
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("DroneNotInMaintenance");
+    }
+
+    [Fact]
+    public void MarkInFlight_WhenOutOfService_ShouldThrowConflict()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.AssignToMission();
+        drone.ReportFailure();
+
+        // Act
+        var act = () => drone.MarkInFlight();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("DroneNotAvailable");
+    }
+
+    [Fact]
+    public void ReleaseFromMission_WhenOutOfService_ShouldKeepOutOfService()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-001", "Model X", 30m);
+        drone.AssignToMission();
+        drone.ReportFailure();
+
+        // Act
+        drone.ReleaseFromMission();
+
+        // Assert
+        drone.Status.Should().Be(DroneStatus.OutOfService);
+    }
+
 }

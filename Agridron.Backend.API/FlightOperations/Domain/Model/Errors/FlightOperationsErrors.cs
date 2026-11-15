@@ -41,6 +41,15 @@ public static class FlightOperationsErrors
     public static Error DroneBusy(long id, string status) =>
         Error.Conflict("DroneBusy", $"Drone with id {id} is currently '{status}' and cannot be deleted or modified.");
 
+    public static Error DroneFailureNotAllowed(long id, string status) =>
+        Error.Conflict("DroneFailureNotAllowed", $"A failure cannot be reported for drone with id {id} while it is '{status}'.");
+
+    public static Error DroneNotInMaintenance(long id, string status) =>
+        Error.Conflict("DroneNotInMaintenance", $"Drone with id {id} is '{status}'; only a drone in maintenance or out of service can complete a maintenance.");
+
+    public static readonly Error DroneFailureDescriptionRequired =
+        Error.Validation("DroneFailureDescriptionRequired", "The failure description is required.");
+
     // ---------------------------------------------------------------------
     // Mission Errors
     // ---------------------------------------------------------------------
