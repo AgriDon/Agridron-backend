@@ -190,4 +190,80 @@ public class DroneCommandServiceTests
         drone.Status.Should().Be(DroneStatus.Available);
     }
 
+        [Fact]
+    public async Task Handle_CompleteDroneMaintenanceCommand_ShouldSaveMaintenanceRecord()
+    {
+        // Arrange
+        var drone = new Drone("SN-HIS-01", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+        drone.SendToMaintenance();
+        var date = new DateTimeOffset(2026, 11, 15, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(
+            drone.Id.Value, date, date.AddMonths(3), "Carlos Ramírez", MaintenanceType.Preventive, "Limpieza de boquillas"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var records = await _maintenanceRecordRepository.ListByDroneIdAsync(drone.Id);
+        records.Should().ContainSingle();
+        records[0].Technician.Should().Be("Carlos Ramírez");
+        records[0].Type.Should().Be(MaintenanceType.Preventive);
+        records[0].Description.Should().Be("Limpieza de boquillas");
+        records[0].PerformedAt.Should().Be(date);
+    }
+
+    [Fact]
+    public async Task Handle_CompleteDroneMaintenanceCommand_WhenOutOfService_ShouldForceCorrective()
+    {
+        // Arrange
+        var drone = new Drone("SN-HIS-02", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+        drone.ReportFailure();
+
+        // Act
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(
+            drone.Id.Value, DateTimeOffset.UtcNow, null, "Lucía Torres", MaintenanceType.Preventive, "Cambio de motor"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be(DroneStatus.Available);
+        var records = await _maintenanceRecordRepository.ListByDroneIdAsync(drone.Id);
+        records.Should().ContainSingle().Which.Type.Should().Be(MaintenanceType.Corrective);
+    }
+
+    [Fact]
+    public async Task Handle_CompleteDroneMaintenanceCommand_WithoutTechnician_ShouldFailAndKeepDrone()
+    {
+        // Arrange
+        var drone = new Drone("SN-HIS-03", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+        drone.SendToMaintenance();
+
+        // Act
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(drone.Id.Value, DateTimeOffset.UtcNow, null, "  "));
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error!.Code.Should().Be("MaintenanceTechnicianRequired");
+        drone.Status.Should().Be(DroneStatus.Maintenance);
+        (await _maintenanceRecordRepository.ListByDroneIdAsync(drone.Id)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_CompleteDroneMaintenanceCommand_WhenAvailable_ShouldNotSaveRecord()
+    {
+        // Arrange
+        var drone = new Drone("SN-HIS-04", "Model Alpha", 15m);
+        await _droneRepository.AddAsync(drone);
+
+        // Act
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(drone.Id.Value, DateTimeOffset.UtcNow, null, "Carlos Ramírez"));
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error!.Code.Should().Be("DroneNotInMaintenance");
+        (await _maintenanceRecordRepository.ListByDroneIdAsync(drone.Id)).Should().BeEmpty();
+    }
+
 }
