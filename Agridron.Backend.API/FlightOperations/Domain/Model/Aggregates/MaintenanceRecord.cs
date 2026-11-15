@@ -16,7 +16,7 @@ public class MaintenanceRecord : AggregateRoot<MaintenanceRecordId>, IAuditableE
 {
 
     public const int MaxDescriptionLength = 500;
-    public const int MaxTechnicianLenght = 120;
+    public const int MaxTechnicianLength = 120;
 
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
