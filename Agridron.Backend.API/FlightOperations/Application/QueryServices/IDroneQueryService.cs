@@ -8,4 +8,6 @@ public interface IDroneQueryService
 {
     Task<Result<Drone>> Handle(GetDroneByIdQuery query, CancellationToken cancellationToken = default);
     Task<Result<PagedResult<Drone>>> Handle(GetDronesFilteredQuery query, CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<MaintenanceRecord>>> Handle(GetMaintenanceRecordsByDroneIdQuery query, CancellationToken cancellationToken = default);
 }

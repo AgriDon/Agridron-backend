@@ -8,7 +8,7 @@ using Agridron.Backend.API.Shared.Application.Model;
 
 namespace Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices;
 
-internal sealed class DroneQueryService(IDroneRepository droneRepository) : IDroneQueryService
+internal sealed class DroneQueryService(IDroneRepository droneRepository , IMaintenanceRecordRepository maintenanceRecordRepository) : IDroneQueryService
 {
     public async Task<Result<Drone>> Handle(GetDroneByIdQuery query, CancellationToken cancellationToken = default)
     {
@@ -43,4 +43,21 @@ internal sealed class DroneQueryService(IDroneRepository droneRepository) : IDro
 
         return Result<PagedResult<Drone>>.Success(Paging.Apply(drones, query.Pagination));
     }
+
+    public async Task<Result<IReadOnlyList<MaintenanceRecord>>> Handle(
+        GetMaintenanceRecordsByDroneIdQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var drone = await droneRepository.FindByIdAsync(query.DroneId, cancellationToken);
+        if (drone is null || !drone.IsActive)
+        {
+            return Result<IReadOnlyList<MaintenanceRecord>>.Failure(FlightOperationsErrors.DroneNotFound(query.DroneId));
+        }
+
+        var records = await maintenanceRecordRepository.ListByDroneIdAsync(drone.Id, cancellationToken);
+        return Result<IReadOnlyList<MaintenanceRecord>>.Success(records);
+    }
+
 }

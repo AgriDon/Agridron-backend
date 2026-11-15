@@ -321,6 +321,55 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                     b.ToTable("incidents", (string)null);
                 });
 
+            modelBuilder.Entity("Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates.MaintenanceRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("description");
+
+                    b.Property<long>("DroneId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("drone_id");
+
+                    b.Property<DateTimeOffset>("PerformedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("performed_at");
+
+                    b.Property<string>("Technician")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("technician");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_maintenance_records");
+
+                    b.HasIndex("DroneId")
+                        .HasDatabaseName("ix_maintenance_records_drone_id");
+
+                    b.ToTable("maintenance_records", (string)null);
+                });
+
             modelBuilder.Entity("Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates.Mission", b =>
                 {
                     b.Property<long>("Id")

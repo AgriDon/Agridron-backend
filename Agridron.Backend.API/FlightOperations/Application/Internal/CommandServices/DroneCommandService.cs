@@ -13,6 +13,7 @@ namespace Agridron.Backend.API.FlightOperations.Application.Internal.CommandServ
 internal sealed class DroneCommandService(
     IDroneRepository droneRepository,
     IIncidentRepository incidentRepository,
+    IMaintenanceRecordRepository maintenanceRecordRepository,
     IUnitOfWork unitOfWork) : IDroneCommandService
 {
     public async Task<Result<Drone>> Handle(CreateDroneCommand command, CancellationToken cancellationToken = default)
@@ -134,7 +135,19 @@ internal sealed class DroneCommandService(
 
         try
         {
-            drone.CompleteMaintenance(command.MaintenanceDate, command.NextMaintenanceDate);
+            var performedAt = command.MaintenanceDate ?? DateTimeOffset.UtcNow;
+
+            // A drone with a reported failure can only receive a corrective maintenance (repair).
+            var type = drone.Status == DroneStatus.OutOfService
+                ? MaintenanceType.Corrective
+                : command.Type ?? MaintenanceType.Preventive;
+
+            // Built before changing the drone, so an invalid record never leaves the drone half-updated.
+            var record = new MaintenanceRecord(drone.Id, performedAt, type, command.Technician!, command.Description);
+
+            drone.CompleteMaintenance(performedAt, command.NextMaintenanceDate);
+
+            await maintenanceRecordRepository.AddAsync(record, cancellationToken);
             await unitOfWork.CompleteAsync(cancellationToken);
 
             return Result<Drone>.Success(drone);

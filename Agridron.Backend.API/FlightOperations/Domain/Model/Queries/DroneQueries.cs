@@ -9,3 +9,9 @@ public sealed record GetDronesFilteredQuery(
     decimal? MinCapacity,
     decimal? MaxCapacity,
     PaginationParameters Pagination);
+
+/// <summary>
+/// Maintenance history of a drone, most recent first
+/// </summary>
+/// <param name="DroneId"></param>
+public sealed record GetMaintenanceRecordsByDroneIdQuery(long DroneId);
