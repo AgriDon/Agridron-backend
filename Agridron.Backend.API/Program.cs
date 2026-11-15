@@ -126,6 +126,10 @@ builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Reposito
     Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.IncidentRepository>();
 builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IOperationStatusRepository,
     Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.OperationStatusRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Domain.Repositories.IMaintenanceRecordRepository,
+    Agridron.Backend.API.FlightOperations.Infrastructure.Persistence.EntityFrameworkCore.Repositories.MaintenanceRecordRepository>();
+
+
 
 // Dependency Injection - Flight Operations ACL & application services
 builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.Internal.OutboundServices.ACL.IExternalFieldService,

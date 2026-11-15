@@ -1,3 +1,5 @@
+using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
+
 namespace Agridron.Backend.API.FlightOperations.Domain.Model.Commands;
 
 public sealed record CreateDroneCommand(
@@ -29,7 +31,10 @@ public sealed record SendDroneToMaintenanceCommand(long Id);
 public sealed record CompleteDroneMaintenanceCommand(
     long Id,
     DateTimeOffset? MaintenanceDate,
-    DateTimeOffset? NextMaintenanceDate = null);
+    DateTimeOffset? NextMaintenanceDate = null,
+    string? Technician = null,
+    MaintenanceType? Type = null,
+    string? Description = null);
 
 
 /**
