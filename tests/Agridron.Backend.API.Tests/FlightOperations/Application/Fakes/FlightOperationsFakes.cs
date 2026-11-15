@@ -259,3 +259,51 @@ public class FakeExternalFieldService : IExternalFieldService
         return Task.FromResult(ActiveFarms.Contains(farmId));
     }
 }
+
+
+public class FakeMaintenanceRecordRepository : IMaintenanceRecordRepository
+{
+    private readonly List<MaintenanceRecord> _records = [];
+    private long _idCounter = 1;
+
+    public Task AddAsync(MaintenanceRecord entity, CancellationToken cancellationToken = default)
+    {
+        if (entity.Id.Value == 0)
+        {
+            var prop = typeof(MaintenanceRecord).BaseType!.GetProperty("Id")!;
+            prop.SetValue(entity, new MaintenanceRecordId(_idCounter++));
+        }
+
+        _records.Add(entity);
+        return Task.CompletedTask;
+    }
+
+    public Task<MaintenanceRecord?> FindByIdAsync(long id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_records.FirstOrDefault(m => m.Id.Value == id));
+    }
+
+    public void Update(MaintenanceRecord entity)
+    {
+    }
+
+    public void Remove(MaintenanceRecord entity)
+    {
+        _records.Remove(entity);
+    }
+
+    public Task<IEnumerable<MaintenanceRecord>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IEnumerable<MaintenanceRecord>>(_records);
+    }
+
+    public Task<IReadOnlyList<MaintenanceRecord>> ListByDroneIdAsync(DroneId droneId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<MaintenanceRecord> result = _records
+            .Where(m => m.DroneId.Value == droneId.Value)
+            .OrderByDescending(m => m.PerformedAt)
+            .ThenByDescending(m => m.Id.Value)
+            .ToList();
+        return Task.FromResult(result);
+    }
+}

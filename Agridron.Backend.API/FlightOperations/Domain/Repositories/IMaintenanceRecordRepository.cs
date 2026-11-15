@@ -1,9 +1,10 @@
 ﻿using Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates;
 using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
+using Agridron.Backend.API.Shared.Domain.Repositories;
 
 namespace Agridron.Backend.API.FlightOperations.Domain.Repositories;
 
-public interface IMaintenanceRecordRepository
+public interface IMaintenanceRecordRepository : IBaseRepository<MaintenanceRecord>
 {
     /// <summary>
     /// List the maintenance of a drone, from the first maintenance to last maintenance

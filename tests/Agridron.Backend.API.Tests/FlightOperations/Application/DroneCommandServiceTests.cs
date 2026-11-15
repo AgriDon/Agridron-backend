@@ -10,12 +10,13 @@ public class DroneCommandServiceTests
 {
     private readonly FakeDroneRepository _droneRepository = new();
     private readonly FakeIncidentRepository _incidentRepository = new();
+    private readonly FakeMaintenanceRecordRepository _maintenanceRecordRepository = new();
     private readonly FakeUnitOfWork _unitOfWork = new();
     private readonly DroneCommandService _service;
 
     public DroneCommandServiceTests()
     {
-        _service = new DroneCommandService(_droneRepository, _incidentRepository,_unitOfWork);
+        _service = new DroneCommandService(_droneRepository, _incidentRepository,_maintenanceRecordRepository,_unitOfWork);
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class DroneCommandServiceTests
         var date = new DateTimeOffset(2026, 11, 13, 0, 0, 0, TimeSpan.Zero);
 
         // Act
-        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(drone.Id.Value, date, date.AddMonths(3)));
+        var result = await _service.Handle(new CompleteDroneMaintenanceCommand(drone.Id.Value, date, date.AddMonths(3), "Carlos Ramírez"));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
