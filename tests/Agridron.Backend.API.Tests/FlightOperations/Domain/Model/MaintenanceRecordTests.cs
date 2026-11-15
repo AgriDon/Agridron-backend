@@ -23,6 +23,9 @@ public class MaintenanceRecordTests {
             record.Description.Should().Be("Cambio de motor");
         }
 
+        /// <summary>
+        /// The description of each maintenance is optional
+        /// </summary>
         [Fact]
         public void Constructor_WithoutDescription_ShouldBeNull()
         {
@@ -47,6 +50,9 @@ public class MaintenanceRecordTests {
                 .Which.Error.Code.Should().Be("MaintenanceTechnicianRequired");
         }
 
+        /// <summary>
+        /// The technician name can not be to long (120 characters is the top)
+        /// </summary>
         [Fact]
         public void Constructor_WithTooLongTechnician_ShouldThrowValidation()
         {
@@ -58,6 +64,9 @@ public class MaintenanceRecordTests {
                 .Which.Error.Code.Should().Be("MaintenanceTechnicianTooLong");
         }
 
+        /// <summary>
+        /// Only two types maintenance are validated
+        /// </summary>
         [Fact]
         public void Constructor_WithInvalidType_ShouldThrowValidation()
         {
