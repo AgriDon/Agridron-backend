@@ -62,7 +62,7 @@ public sealed class Nozzle : AggregateRoot<NozzleId>, IAuditableEntity
     /// <returns></returns>
     public bool IsWorn() => Status == NozzleStatus.Worn;
 
-    public void Dactivate(){IsActive = false;}
+    public void Deactivate(){IsActive = false;}
     public void Activate(){IsActive = true;}
 
     public void ChangeStatus(NozzleStatus newStatus)
