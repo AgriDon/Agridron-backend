@@ -577,6 +577,60 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                     b.ToTable("operation_statuses", (string)null);
                 });
 
+            modelBuilder.Entity("Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.Aggregates.Chemical", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpirationDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiration_date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<decimal>("MinimumStockLiters")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("minimum_stock_liters");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal>("StockLiters")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("stock_liters");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_chemicals");
+
+                    b.HasIndex("Type")
+                        .HasDatabaseName("ix_chemicals_type");
+
+                    b.ToTable("chemicals", (string)null);
+                });
+
             modelBuilder.Entity("Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates.Mission", b =>
                 {
                     b.OwnsOne("Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects.GeoCoordinate", "LastPausePoint", b1 =>
