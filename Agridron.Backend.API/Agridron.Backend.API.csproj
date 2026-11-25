@@ -37,8 +37,6 @@
 
     <ItemGroup>
       <Folder Include="InventoryAndResourceManagement\Application\" />
-      <Folder Include="InventoryAndResourceManagement\Domain\Model\Aggregates\" />
-      <Folder Include="InventoryAndResourceManagement\Domain\Model\Events\" />
     </ItemGroup>
 
 </Project>
