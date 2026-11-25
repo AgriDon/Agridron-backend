@@ -155,6 +155,10 @@ builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.Que
 // Dependency Injection - Inventory & Resource Management Bounded Context
 builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Domain.Repositories.IChemicalRepository,
     Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.ChemicalRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.CommandServices.IChemicalCommandService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.CommandServices.ChemicalCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.IChemicalQueryService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.ChemicalQueryService>();
 ////
 /// // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));

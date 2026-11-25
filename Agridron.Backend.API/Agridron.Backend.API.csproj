@@ -35,8 +35,4 @@
         <PackageReference Include="Cortex.Mediator" Version="3.1.2"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="InventoryAndResourceManagement\Application\" />
-    </ItemGroup>
-
 </Project>
