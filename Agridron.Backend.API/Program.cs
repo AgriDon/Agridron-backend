@@ -163,7 +163,10 @@ builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.A
 ///
 builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Domain.Repositories.INozzleRepository,
     Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.NozzleRepository>();
-
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.CommandServices.INozzleCommandService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.CommandServices.NozzleCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.INozzleQueryService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.NozzleQueryService>();
 
 
 

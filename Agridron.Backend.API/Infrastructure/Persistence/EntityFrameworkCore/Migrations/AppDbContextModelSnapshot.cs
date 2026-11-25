@@ -631,6 +631,55 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                     b.ToTable("chemicals", (string)null);
                 });
 
+            modelBuilder.Entity("Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.Aggregates.Nozzle", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("DiameterMm")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("diameter_mm");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("StockUnits")
+                        .HasColumnType("int")
+                        .HasColumnName("stock_units");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_nozzles");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_nozzles_status");
+
+                    b.ToTable("nozzles", (string)null);
+                });
+
             modelBuilder.Entity("Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates.Mission", b =>
                 {
                     b.OwnsOne("Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects.GeoCoordinate", "LastPausePoint", b1 =>
