@@ -159,6 +159,15 @@ builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.A
     Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.CommandServices.ChemicalCommandService>();
 builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.IChemicalQueryService,
     Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.ChemicalQueryService>();
+
+///
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Domain.Repositories.INozzleRepository,
+    Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.NozzleRepository>();
+
+
+
+
+
 ////
 /// // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));

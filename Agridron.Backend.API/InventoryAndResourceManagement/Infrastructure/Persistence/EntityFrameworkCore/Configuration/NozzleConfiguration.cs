@@ -1,0 +1,2 @@
+﻿namespace Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+
