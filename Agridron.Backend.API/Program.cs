@@ -151,7 +151,28 @@ builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.Com
 builder.Services.AddScoped<Agridron.Backend.API.FlightOperations.Application.QueryServices.IOperationStatusQueryService,
     Agridron.Backend.API.FlightOperations.Application.Internal.QueryServices.OperationStatusQueryService>();
 
-// Mediator Configuration
+
+// Dependency Injection - Inventory & Resource Management Bounded Context
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Domain.Repositories.IChemicalRepository,
+    Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.ChemicalRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.CommandServices.IChemicalCommandService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.CommandServices.ChemicalCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.IChemicalQueryService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.ChemicalQueryService>();
+
+///
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Domain.Repositories.INozzleRepository,
+    Agridron.Backend.API.InventoryAndResourceManagement.Infrastructure.Persistence.EntityFrameworkCore.Repositories.NozzleRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.CommandServices.INozzleCommandService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.CommandServices.NozzleCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.INozzleQueryService,
+    Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.NozzleQueryService>();
+
+
+
+
+////
+/// // Mediator Configuration
 builder.Services.AddScoped(typeof(ICommandPipelineBehavior<>), typeof(LoggingCommandBehavior<>));
 builder.Services.AddCortexMediator([typeof(Program)]);
 
