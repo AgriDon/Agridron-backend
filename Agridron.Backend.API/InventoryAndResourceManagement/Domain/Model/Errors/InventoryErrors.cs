@@ -32,4 +32,27 @@ public static class InventoryErrors
 
     public static Error ChemicalNotFound(long id) =>
         Error.NotFound("ChemicalNotFound", $"Chemical with id {id} was not found.");
+
+
+    // ---------------------------------------------------------------------
+    // Nozzle Errors
+    // ---------------------------------------------------------------------
+
+    public static readonly Error NozzleTypeInvalid =
+        Error.Validation("NozzleTypeInvalid", "The nozzle type must be 'flat-fan' or 'hollow-cone'.");
+
+    public static readonly Error NozzleDiameterInvalid =
+        Error.Validation("NozzleDiameterInvalid", "The nozzle diameter in millimeters must be greater than zero.");
+
+    public static readonly Error NozzleStockInvalid =
+        Error.Validation("NozzleStockInvalid", "The nozzle stock units must be greater than or equal to zero.");
+
+    public static readonly Error NozzleStatusInvalid =
+        Error.Validation("NozzleStatusInvalid", "The nozzle status must be 'good' or 'worn'.");
+
+    public static Error NozzleNotFound(long id) =>
+        Error.NotFound("NozzleNotFound", $"Nozzle with id {id} was not found.");
+
+
+
 }
