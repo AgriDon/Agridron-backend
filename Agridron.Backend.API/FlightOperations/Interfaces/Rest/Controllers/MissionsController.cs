@@ -2,6 +2,7 @@ using System.Globalization;
 using Agridron.Backend.API.FlightOperations.Application.CommandServices;
 using Agridron.Backend.API.FlightOperations.Application.QueryServices;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Commands;
+using Agridron.Backend.API.FlightOperations.Domain.Model.Errors;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Queries;
 using Agridron.Backend.API.FlightOperations.Interfaces.Rest.Resources;
 using Agridron.Backend.API.FlightOperations.Interfaces.Rest.Transform;
@@ -324,6 +325,35 @@ public class MissionsController(
         CancellationToken cancellationToken)
     {
         var command = new CancelMissionCommand(id, resource?.Reason);
+        var result = await missionCommandService.Handle(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(MissionAssembler.ToResourceFrom(result.Value!))
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
+
+
+
+    [HttpPost("{id:long}/reschedule")]
+    [SwaggerOperation(
+        Summary = "Reschedule flight mission ",
+        Description = "Changes the scheduled date of a mission that has not taken off yet (Planned or Authorized). The new date must be in the future.",
+        OperationId = "RescheduleMission")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Mission rescheduled successfully", typeof(MissionResource))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "The new date is missing or in the past")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Mission not found")]
+    [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "The mission already took off, was completed or cancelled")]
+    public async Task<IActionResult> RescheduleMissionAsync(
+        long id,
+        [FromBody] RescheduleMissionResource? resource,
+        CancellationToken cancellationToken)
+    {
+        if (resource?.ScheduledAt is null)
+        {
+            return problemDetailsFactory.CreateProblemDetails(this, FlightOperationsErrors.MissionRescheduleDateRequired);
+        }
+
+        var command = new RescheduleMissionCommand(id, resource.ScheduledAt.Value);
         var result = await missionCommandService.Handle(command, cancellationToken);
 
         return result.IsSuccess

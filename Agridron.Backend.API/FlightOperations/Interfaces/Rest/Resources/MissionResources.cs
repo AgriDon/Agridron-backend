@@ -136,3 +136,11 @@ public sealed record CompleteMissionResource(
 
 public sealed record CancelMissionResource(
     string? Reason);
+
+
+
+/**
+ * Body of POST /api/v1/missions/{id}/reschedule
+ */
+public sealed record RescheduleMissionResource(
+    DateTimeOffset? ScheduledAt);

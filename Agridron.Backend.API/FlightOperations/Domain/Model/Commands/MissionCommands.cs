@@ -67,3 +67,9 @@ public sealed record CompleteMissionCommand(
     string? ClosingNotes = null);
 
 public sealed record CancelMissionCommand(long MissionId, string? Reason = null);
+
+
+/**
+ * changes the date of a mission that has not taken off yet
+ */
+public sealed record RescheduleMissionCommand(long MissionId, DateTimeOffset NewScheduledAt);
