@@ -120,6 +120,11 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
 
     public void AssignToMission()
     {
+        ///a retired (deactivated) drone can never be assigned again
+        if (!IsActive)
+        {
+            throw new DomainException(FlightOperationsErrors.DroneInactive(Id.Value));
+        }
         if (Status != DroneStatus.Available)
         {
             throw new DomainException(FlightOperationsErrors.DroneNotAvailable(Id.Value, Status.ToString()));

@@ -1,4 +1,5 @@
 ﻿using Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.Errors;
+using Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.Events;
 using Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.ValueObjects.ValueObjects;
 using Agridron.Backend.API.Shared.Domain.Model.Aggregates;
 using Agridron.Backend.API.Shared.Domain.Model.Entities;
@@ -65,6 +66,10 @@ Always added a positive amount of liters to the current stock*/
         if (liters <= 0) { throw new DomainException(InventoryErrors.ChemicalRestockAmountInvalid); }
 
         StockLiters += liters;
+        if (Id.Value > 0)
+        {
+            AddDomainEvent(new ChemicalRestockedEvent(Id.Value, liters, StockLiters, DateTimeOffset.UtcNow));
+        }
 
     }
 

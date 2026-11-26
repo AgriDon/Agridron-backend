@@ -38,6 +38,9 @@ public static class FlightOperationsErrors
     public static Error DroneNotAvailable(long id, string status) =>
         Error.Conflict("DroneNotAvailable", $"Drone with id {id} is in status '{status}' and cannot be assigned.");
 
+    public static Error DroneInactive(long id) =>
+        Error.Conflict("DroneInactive", $"Drone with id {id} was retired from the fleet and cannot be assigned to missions.");
+
     public static Error DroneBusy(long id, string status) =>
         Error.Conflict("DroneBusy", $"Drone with id {id} is currently '{status}' and cannot be deleted or modified.");
 
