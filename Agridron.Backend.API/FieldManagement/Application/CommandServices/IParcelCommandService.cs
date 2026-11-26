@@ -18,7 +18,10 @@ public interface IParcelCommandService
     /// <summary>Handles deleting or deactivating a parcel.</summary>
     Task<Result> Handle(DeleteParcelCommand command, CancellationToken cancellationToken = default);
 
-    /// <summary>Registers a parcel with its geometry and optional phenology.</summary>
+    /// <summary>Handles reactivating an inactive parcel.</summary>
+    Task<Result<Parcel>> Handle(ActivateParcelCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>Registers a parcel with its geometry, optional phenology, and obstacle notes.</summary>
     Task<Result<Parcel>> CreateAsync(
         long farmId,
         long cropId,
@@ -26,6 +29,7 @@ public interface IParcelCommandService
         string geometry,
         string? phenologicalStage = null,
         string? imageUrl = null,
+        string? obstacleNotes = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Replaces the mutable data of a parcel.</summary>
@@ -37,8 +41,12 @@ public interface IParcelCommandService
         string geometry,
         string? phenologicalStage = null,
         string? imageUrl = null,
+        string? obstacleNotes = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Deactivates a parcel (soft-delete) when it has no fumigation areas.</summary>
     Task<Result> DeleteAsync(long id, CancellationToken cancellationToken = default);
+
+    /// <summary>Reactivates an inactive parcel.</summary>
+    Task<Result<Parcel>> ActivateAsync(long id, CancellationToken cancellationToken = default);
 }

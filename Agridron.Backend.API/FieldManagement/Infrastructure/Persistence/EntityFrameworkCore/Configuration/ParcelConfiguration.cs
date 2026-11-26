@@ -77,6 +77,10 @@ internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
             .HasColumnName("image_url")
             .HasMaxLength(Parcel.MaxImageUrlLength);
 
+        builder.Property(p => p.ObstacleNotes)
+            .HasColumnName("obstacle_notes")
+            .HasMaxLength(Parcel.MaxObstacleNotesLength);
+
         builder.HasIndex(p => p.FarmId)
             .HasDatabaseName("ix_parcels_farm_id");
 

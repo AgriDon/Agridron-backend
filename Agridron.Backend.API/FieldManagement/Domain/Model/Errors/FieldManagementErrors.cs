@@ -87,6 +87,9 @@ public static class FieldManagementErrors
     public static readonly Error ParcelPhenologicalStageTooLong =
         Error.Validation("ParcelPhenologicalStageTooLong", "The parcel phenological stage cannot exceed 60 characters.");
 
+    public static readonly Error ParcelObstacleNotesTooLong =
+        Error.Validation("ParcelObstacleNotesTooLong", "The parcel obstacle notes cannot exceed 500 characters.");
+
     public static readonly Error ParcelImageUrlInvalid =
         Error.Validation("ParcelImageUrlInvalid", "The parcel image must be an absolute http or https URL.");
 
