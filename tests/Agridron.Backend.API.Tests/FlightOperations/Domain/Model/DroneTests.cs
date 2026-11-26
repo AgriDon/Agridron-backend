@@ -317,4 +317,21 @@ public sealed class DroneTests
         drone.Status.Should().Be(DroneStatus.Available);
     }
 
+
+    [Fact]
+    public void AssignToMission_WhenDroneIsDeactivated_ShouldThrowDroneInactive()
+    {
+        // Arrange: DR-007, the supervisor retires the drone from the fleet
+        var drone = new Drone("AGRI-DRN-RET", "DJI Agras T40", 40m);
+        drone.Deactivate();
+
+        // Act
+        var act = () => drone.AssignToMission();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be(FlightOperationsErrors.DroneInactive(0).Code);
+        drone.Status.Should().Be(DroneStatus.Available);
+    }
+
 }
