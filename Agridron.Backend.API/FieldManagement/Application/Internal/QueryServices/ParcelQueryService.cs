@@ -19,7 +19,7 @@ internal sealed class ParcelQueryService(IParcelRepository parcelRepository) : I
 
         var parcel = await parcelRepository.FindByIdAsync(query.Id, cancellationToken);
 
-        return parcel is null || !parcel.IsActive
+        return parcel is null || (!query.IncludeInactive && !parcel.IsActive)
             ? Result<Parcel>.Failure(FieldManagementErrors.ParcelNotFound(query.Id))
             : Result<Parcel>.Success(parcel);
     }
@@ -30,22 +30,27 @@ internal sealed class ParcelQueryService(IParcelRepository parcelRepository) : I
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        var onlyActive = !query.IncludeInactive;
         IReadOnlyList<Parcel> parcels = query.FarmId.HasValue
-            ? await parcelRepository.ListByFarmIdAsync(new FarmId(query.FarmId.Value), onlyActive: true, cancellationToken)
+            ? await parcelRepository.ListByFarmIdAsync(new FarmId(query.FarmId.Value), onlyActive, cancellationToken)
             : (await parcelRepository.ListAsync(cancellationToken))
-            .Where(p => p.IsActive)
+            .Where(p => query.IncludeInactive || p.IsActive)
             .OrderBy(parcel => parcel.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         return Result<PagedResult<Parcel>>.Success(Paging.Apply(parcels, query.Pagination));
     }
 
-    public Task<Result<Parcel>> GetByIdAsync(long id, CancellationToken cancellationToken = default) =>
-        Handle(new GetParcelByIdQuery(id), cancellationToken);
+    public Task<Result<Parcel>> GetByIdAsync(
+        long id,
+        bool includeInactive = false,
+        CancellationToken cancellationToken = default) =>
+        Handle(new GetParcelByIdQuery(id, includeInactive), cancellationToken);
 
     public Task<Result<PagedResult<Parcel>>> ListAsync(
         long? farmId,
         PaginationParameters pagination,
+        bool includeInactive = false,
         CancellationToken cancellationToken = default) =>
-        Handle(new GetParcelsByFarmIdQuery(farmId, pagination), cancellationToken);
+        Handle(new GetParcelsByFarmIdQuery(farmId, pagination, includeInactive), cancellationToken);
 }

@@ -10,4 +10,5 @@ public sealed record UpdateParcelCommand(
     string Name,
     string Geometry,
     string? PhenologicalStage = null,
-    string? ImageUrl = null);
+    string? ImageUrl = null,
+    string? ObstacleNotes = null);

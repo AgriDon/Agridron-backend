@@ -247,4 +247,52 @@ public class ParcelTests
         // Assert
         parcel.IsActive.Should().BeTrue();
     }
+
+    [Fact]
+    public void Constructor_ShouldTrimAndSetObstacleNotes()
+    {
+        // Act
+        var parcel = new Parcel(
+            new FarmId(1),
+            new CropId(1),
+            "Lote Obstáculos",
+            TestGeometry.Square(-76.14, -14.07, -76.13, -14.06),
+            "Flowering",
+            null,
+            "  Poste de alta tensión en esquina norte  ");
+
+        // Assert
+        parcel.ObstacleNotes.Should().Be("Poste de alta tensión en esquina norte");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void UpdateObstacleNotes_ShouldNormalizeBlankOrNullToNull(string? notes)
+    {
+        // Arrange
+        var parcel = CreateParcel();
+        parcel.UpdateObstacleNotes("Árboles altos");
+
+        // Act
+        parcel.UpdateObstacleNotes(notes);
+
+        // Assert
+        parcel.ObstacleNotes.Should().BeNull();
+    }
+
+    [Fact]
+    public void UpdateObstacleNotes_ShouldRejectNotesTooLong()
+    {
+        // Arrange
+        var parcel = CreateParcel();
+
+        // Act
+        var action = () => parcel.UpdateObstacleNotes(new string('x', Parcel.MaxObstacleNotesLength + 1));
+
+        // Assert
+        action.Should().Throw<DomainException>()
+            .Which.Error.Should().Be(FieldManagementErrors.ParcelObstacleNotesTooLong);
+    }
 }

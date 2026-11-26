@@ -19,6 +19,9 @@ public sealed class Parcel : AggregateRoot<ParcelId>
     /// <summary>Maximum length of the parcel phenological stage.</summary>
     public const int MaxPhenologicalStageLength = 60;
 
+    /// <summary>Maximum length of the parcel obstacle notes.</summary>
+    public const int MaxObstacleNotesLength = 500;
+
     /// <summary>Maximum length of the parcel image URL.</summary>
     public const int MaxImageUrlLength = 500;
 
@@ -48,7 +51,7 @@ public sealed class Parcel : AggregateRoot<ParcelId>
     }
 
     /// <summary>
-    ///     Creates a parcel with optional phenological stage and image.
+    ///     Creates a parcel with optional phenological stage, image, and obstacle notes.
     /// </summary>
     public Parcel(
         FarmId farmId,
@@ -56,7 +59,8 @@ public sealed class Parcel : AggregateRoot<ParcelId>
         string name,
         GeoJsonPolygon geometry,
         string? phenologicalStage,
-        string? imageUrl) : base(ParcelId.Empty)
+        string? imageUrl,
+        string? obstacleNotes = null) : base(ParcelId.Empty)
     {
         _isInitializing = true;
 
@@ -68,6 +72,7 @@ public sealed class Parcel : AggregateRoot<ParcelId>
             RedefineGeometry(geometry);
             UpdatePhenologicalStage(phenologicalStage);
             ChangeImage(imageUrl);
+            UpdateObstacleNotes(obstacleNotes);
         }
         finally
         {
@@ -98,6 +103,9 @@ public sealed class Parcel : AggregateRoot<ParcelId>
 
     /// <summary>An optional image URL.</summary>
     public string? ImageUrl { get; private set; }
+
+    /// <summary>Optional notes describing physical obstacles (poles, power lines, tall trees).</summary>
+    public string? ObstacleNotes { get; private set; }
 
     /// <summary>Moves the parcel to another farm.</summary>
     /// <param name="farmId">The new farm identifier.</param>
@@ -156,6 +164,25 @@ public sealed class Parcel : AggregateRoot<ParcelId>
         }
 
         PhenologicalStage = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+    }
+
+    /// <summary>Updates or clears the parcel obstacle notes.</summary>
+    /// <param name="notes">Optional notes describing physical obstacles (poles, power lines, tall trees).</param>
+    public void UpdateObstacleNotes(string? notes)
+    {
+        if (notes is null)
+        {
+            ObstacleNotes = null;
+            return;
+        }
+
+        var trimmed = notes.Trim();
+        if (trimmed.Length > MaxObstacleNotesLength)
+        {
+            throw new DomainException(FieldManagementErrors.ParcelObstacleNotesTooLong);
+        }
+
+        ObstacleNotes = string.IsNullOrEmpty(trimmed) ? null : trimmed;
     }
 
     /// <summary>Deactivates the parcel (soft delete).</summary>

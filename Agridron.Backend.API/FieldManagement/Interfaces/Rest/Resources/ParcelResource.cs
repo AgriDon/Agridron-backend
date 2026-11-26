@@ -12,6 +12,7 @@ namespace Agridron.Backend.API.FieldManagement.Interfaces.Rest.Resources;
 /// <param name="PhenologicalStage">The phenological stage of the crop.</param>
 /// <param name="IsActive">Whether the parcel is active.</param>
 /// <param name="ImageUrl">An optional image URL.</param>
+/// <param name="ObstacleNotes">Optional notes describing physical obstacles (poles, power lines, tall trees).</param>
 public sealed record ParcelResource(
     long Id,
     long FarmId,
@@ -21,7 +22,8 @@ public sealed record ParcelResource(
     string Geometry,
     string? PhenologicalStage,
     bool IsActive,
-    string? ImageUrl)
+    string? ImageUrl,
+    string? ObstacleNotes = null)
 {
     public decimal Area => AreaHectares;
     public string? Image => ImageUrl;
