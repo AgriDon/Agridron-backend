@@ -505,4 +505,30 @@ internal sealed class MissionCommandService(
             return Result<Mission>.Failure(ex.Error);
         }
     }
+
+
+
+    public async Task<Result<Mission>> Handle(RescheduleMissionCommand command, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var mission = await missionRepository.FindByIdAsync(command.MissionId, cancellationToken);
+        if (mission is null || !mission.IsActive)
+        {
+            return Result<Mission>.Failure(FlightOperationsErrors.MissionNotFound(command.MissionId));
+        }
+
+        try
+        {
+            mission.Reschedule(command.NewScheduledAt);
+            await unitOfWork.CompleteAsync(cancellationToken);
+
+            return Result<Mission>.Success(mission);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Mission>.Failure(ex.Error);
+        }
+    }
+
 }

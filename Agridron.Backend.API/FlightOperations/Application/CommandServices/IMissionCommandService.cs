@@ -18,4 +18,7 @@ public interface IMissionCommandService
     Task<Result<Mission>> Handle(ResumeMissionCommand command, CancellationToken cancellationToken = default);
     Task<Result<Mission>> Handle(CompleteMissionCommand command, CancellationToken cancellationToken = default);
     Task<Result<Mission>> Handle(CancelMissionCommand command, CancellationToken cancellationToken = default);
+
+    Task<Result<Mission>> Handle(RescheduleMissionCommand command, CancellationToken cancellationToken = default);
+
 }

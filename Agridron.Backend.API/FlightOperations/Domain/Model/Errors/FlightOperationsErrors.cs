@@ -38,6 +38,9 @@ public static class FlightOperationsErrors
     public static Error DroneNotAvailable(long id, string status) =>
         Error.Conflict("DroneNotAvailable", $"Drone with id {id} is in status '{status}' and cannot be assigned.");
 
+    public static Error DroneInactive(long id) =>
+        Error.Conflict("DroneInactive", $"Drone with id {id} was retired from the fleet and cannot be assigned to missions.");
+
     public static Error DroneBusy(long id, string status) =>
         Error.Conflict("DroneBusy", $"Drone with id {id} is currently '{status}' and cannot be deleted or modified.");
 
@@ -110,6 +113,14 @@ public static class FlightOperationsErrors
 
     public static Error MissionCannotBeCancelled(string status) =>
         Error.BusinessRule("MissionCannotBeCancelled", $"Mission in status '{status}' cannot be cancelled.");
+
+
+    public static readonly Error MissionRescheduleDateRequired =
+        Error.Validation("MissionRescheduleDateRequired", "The new scheduled date is required to reschedule the mission.");
+
+    public static readonly Error MissionRescheduleDateInPast =
+        Error.Validation("MissionRescheduleDateInPast", "The new scheduled date must be in the future.");
+
 
     public static Error MissionInProgress(long missionId) =>
         Error.Conflict("MissionInProgress", $"Mission with id {missionId} is currently in progress and cannot be deleted.");

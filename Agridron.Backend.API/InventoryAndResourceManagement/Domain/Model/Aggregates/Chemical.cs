@@ -66,6 +66,10 @@ Always added a positive amount of liters to the current stock*/
         if (liters <= 0) { throw new DomainException(InventoryErrors.ChemicalRestockAmountInvalid); }
 
         StockLiters += liters;
+        if (Id.Value > 0)
+        {
+            AddDomainEvent(new ChemicalRestockedEvent(Id.Value, liters, StockLiters, DateTimeOffset.UtcNow));
+        }
 
         if (Id.Value > 0)
         {

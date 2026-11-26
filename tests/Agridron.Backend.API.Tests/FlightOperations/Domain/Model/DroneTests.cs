@@ -279,4 +279,59 @@ public sealed class DroneTests
         drone.Status.Should().Be(DroneStatus.OutOfService);
     }
 
+
+
+    [Fact]
+    public void CompleteMaintenance_ShouldResetFlightHours()
+    {
+        // Arrange: the drone accumulates 12.5 hours in a mission and then goes to maintenance
+        var drone = new Drone("AGRI-DRN-HRS", "DJI Agras T40", 40m);
+        drone.AssignToMission();
+        drone.MarkInFlight();
+        drone.ReleaseFromMission(12.5m);
+        drone.SendToMaintenance();
+
+        // Act
+        drone.CompleteMaintenance(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMonths(2));
+
+        // Assert
+        drone.FlightHours.Should().Be(0m);
+        drone.Status.Should().Be(DroneStatus.Available);
+    }
+
+    [Fact]
+    public void CompleteMaintenance_AfterFailureRepair_ShouldResetFlightHours()
+    {
+        // Arrange
+        var drone = new Drone("AGRI-DRN-REP", "DJI Agras T40", 40m);
+        drone.AssignToMission();
+        drone.MarkInFlight();
+        drone.ReleaseFromMission(8m);
+        drone.ReportFailure();
+
+        // Act
+        drone.CompleteMaintenance(DateTimeOffset.UtcNow, null);
+
+        // Assert
+        drone.FlightHours.Should().Be(0m);
+        drone.Status.Should().Be(DroneStatus.Available);
+    }
+
+
+    [Fact]
+    public void AssignToMission_WhenDroneIsDeactivated_ShouldThrowDroneInactive()
+    {
+        // Arrange: DR-007, the supervisor retires the drone from the fleet
+        var drone = new Drone("AGRI-DRN-RET", "DJI Agras T40", 40m);
+        drone.Deactivate();
+
+        // Act
+        var act = () => drone.AssignToMission();
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be(FlightOperationsErrors.DroneInactive(0).Code);
+        drone.Status.Should().Be(DroneStatus.Available);
+    }
+
 }
