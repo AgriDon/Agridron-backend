@@ -114,6 +114,14 @@ public static class FlightOperationsErrors
     public static Error MissionCannotBeCancelled(string status) =>
         Error.BusinessRule("MissionCannotBeCancelled", $"Mission in status '{status}' cannot be cancelled.");
 
+
+    public static readonly Error MissionRescheduleDateRequired =
+        Error.Validation("MissionRescheduleDateRequired", "The new scheduled date is required to reschedule the mission.");
+
+    public static readonly Error MissionRescheduleDateInPast =
+        Error.Validation("MissionRescheduleDateInPast", "The new scheduled date must be in the future.");
+
+
     public static Error MissionInProgress(long missionId) =>
         Error.Conflict("MissionInProgress", $"Mission with id {missionId} is currently in progress and cannot be deleted.");
 

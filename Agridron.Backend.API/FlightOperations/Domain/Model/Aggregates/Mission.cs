@@ -438,12 +438,24 @@ public sealed class Mission : AggregateRoot<MissionId>, IAuditableEntity
     /// </summary>
     public void Reschedule(DateTimeOffset newScheduledAt)
     {
-        if (Status == MissionStatus.Completed || Status == MissionStatus.Cancelled)
+        if (Status is not (MissionStatus.Planned or MissionStatus.Authorized))
         {
             throw new DomainException(FlightOperationsErrors.MissionInvalidStatusTransition(Status.ToString(), "Reschedule"));
         }
 
+        if (newScheduledAt <= DateTimeOffset.UtcNow)
+        {
+            throw new DomainException(FlightOperationsErrors.MissionRescheduleDateInPast);
+        }
+
+        var previousScheduledAt = ScheduledAt;
         ScheduledAt = newScheduledAt;
+
+        if (Id.Value > 0)
+        {
+            AddDomainEvent(new MissionRescheduledEvent(Id.Value, previousScheduledAt, newScheduledAt, DateTimeOffset.UtcNow));
+        }
+
     }
 
     public void MarkAsCreated()
