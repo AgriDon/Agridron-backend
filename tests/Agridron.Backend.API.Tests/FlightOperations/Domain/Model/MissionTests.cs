@@ -173,4 +173,105 @@ public sealed class MissionTests
         act.Should().Throw<DomainException>()
             .Which.Error.Code.Should().Be("MissionCannotBeCancelled");
     }
+
+
+    [Fact]
+    public void Reschedule_WhenPlanned_ShouldChangeDateAndKeepStatus()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        var newDate = DateTimeOffset.UtcNow.AddDays(5);
+
+        // Act
+        mission.Reschedule(newDate);
+
+        // Assert
+        mission.ScheduledAt.Should().Be(newDate);
+        mission.Status.Should().Be(MissionStatus.Planned);
+    }
+
+    [Fact]
+    public void Reschedule_WhenAuthorized_ShouldChangeDateAndStayAuthorized()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        mission.AssignResources(new DroneId(1), null, null, null);
+        mission.Approve();
+        var newDate = DateTimeOffset.UtcNow.AddDays(3);
+
+        // Act
+        mission.Reschedule(newDate);
+
+        // Assert
+        mission.ScheduledAt.Should().Be(newDate);
+        mission.Status.Should().Be(MissionStatus.Authorized);
+    }
+
+    [Fact]
+    public void Reschedule_WhenInProgress_ShouldThrowInvalidStatusTransition()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        mission.AssignResources(new DroneId(1), null, null, null);
+        mission.Approve();
+        mission.Start(DateTimeOffset.UtcNow);
+
+        // Act
+        var act = () => mission.Reschedule(DateTimeOffset.UtcNow.AddDays(2));
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("MissionInvalidStatusTransition");
+    }
+
+    [Fact]
+    public void Reschedule_WhenCancelled_ShouldThrowInvalidStatusTransition()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        mission.Cancel("Lluvia");
+
+        // Act
+        var act = () => mission.Reschedule(DateTimeOffset.UtcNow.AddDays(2));
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be("MissionInvalidStatusTransition");
+    }
+
+    [Fact]
+    public void Reschedule_WithPastDate_ShouldThrowValidationAndKeepOriginalDate()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        var originalDate = mission.ScheduledAt;
+
+        // Act
+        var act = () => mission.Reschedule(DateTimeOffset.UtcNow.AddHours(-1));
+
+        // Assert
+        act.Should().Throw<DomainException>()
+            .Which.Error.Code.Should().Be(FlightOperationsErrors.MissionRescheduleDateInPast.Code);
+        mission.ScheduledAt.Should().Be(originalDate);
+    }
+
+    [Fact]
+    public void Reschedule_OnPersistedMission_ShouldRaiseRescheduledEvent()
+    {
+        // Arrange
+        var mission = CreateSampleMission();
+        var previousDate = mission.ScheduledAt;
+        typeof(Mission).BaseType!.GetProperty("Id")!.SetValue(mission, new MissionId(7));
+        var newDate = DateTimeOffset.UtcNow.AddDays(4);
+
+        // Act
+        mission.Reschedule(newDate);
+
+        // Assert
+        var domainEvent = mission.DomainEvents.OfType<MissionRescheduledEvent>().Should().ContainSingle().Subject;
+        domainEvent.MissionId.Should().Be(7);
+        domainEvent.PreviousScheduledAt.Should().Be(previousDate);
+        domainEvent.NewScheduledAt.Should().Be(newDate);
+    }
+
 }
