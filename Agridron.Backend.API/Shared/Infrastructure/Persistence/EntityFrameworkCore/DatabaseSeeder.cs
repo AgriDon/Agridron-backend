@@ -2,6 +2,8 @@ using Agridron.Backend.API.FieldManagement.Domain.Model.Aggregates;
 using Agridron.Backend.API.FieldManagement.Domain.Model.ValueObjects;
 using Agridron.Backend.API.FlightOperations.Domain.Model.Aggregates;
 using Agridron.Backend.API.FlightOperations.Domain.Model.ValueObjects;
+using Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.Aggregates;
+using Agridron.Backend.API.InventoryAndResourceManagement.Domain.Model.ValueObjects.ValueObjects;
 using Agridron.Backend.API.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,6 +19,36 @@ public static class DatabaseSeeder
     {
         try
         {
+            // 0. Seed Inventory & Resource Management (independent of the farms check below:
+            //    it only fills the inventory tables when they are empty)
+            if (!await context.Set<Chemical>().AnyAsync())
+            {
+                await context.Set<Chemical>().AddRangeAsync(
+                    new Chemical("Glifosato 48%", ChemicalType.Herbicide, 120m, 40m, new DateOnly(2027, 8, 30)),
+                    new Chemical("Cipermetrina 25%", ChemicalType.Insecticide, 25m, 30m, new DateOnly(2026, 12, 10)),
+                    new Chemical("Mancozeb 80%", ChemicalType.Fungicide, 60m, 20m, new DateOnly(2027, 1, 15)),
+                    new Chemical("Imidacloprid 35%", ChemicalType.Insecticide, 80m, 25m, new DateOnly(2027, 3, 20)),
+                    new Chemical("2,4-D Amina 72%", ChemicalType.Herbicide, 15m, 20m, new DateOnly(2026, 9, 30)),
+                    new Chemical("Azoxistrobina 25%", ChemicalType.Fungicide, 45m, 15m, new DateOnly(2027, 6, 5)));
+                logger.LogInformation("Seeding demo chemicals...");
+            }
+
+            if (!await context.Set<Nozzle>().AnyAsync())
+            {
+                await context.Set<Nozzle>().AddRangeAsync(
+                    new Nozzle(NozzleType.FlatFan, 5m, 12),
+                    new Nozzle(NozzleType.HollowCone, 3m, 4, NozzleStatus.Worn),
+                    new Nozzle(NozzleType.FlatFan, 7m, 8),
+                    new Nozzle(NozzleType.HollowCone, 4m, 10),
+                    new Nozzle(NozzleType.HollowCone, 6m, 2, NozzleStatus.Worn),
+                    new Nozzle(NozzleType.HollowCone, 3m, 0, NozzleStatus.Worn));
+                logger.LogInformation("Seeding demo nozzles...");
+            }
+
+            await context.SaveChangesAsync();
+
+
+
             // Only seed if no farms exist yet
             if (await context.Set<Farm>().AnyAsync())
             {
