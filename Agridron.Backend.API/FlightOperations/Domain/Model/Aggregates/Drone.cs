@@ -202,6 +202,8 @@ public sealed class Drone : AggregateRoot<DroneId>, IAuditableEntity
         }
         LastMaintenanceDate = maintenanceDate;
         NextMaintenanceDate = nextDate;
+        /// a complete or repair reStart the service hours counter from drone
+        FlightHours = 0m;
         ChangeStatus(DroneStatus.Available);
     }
 
