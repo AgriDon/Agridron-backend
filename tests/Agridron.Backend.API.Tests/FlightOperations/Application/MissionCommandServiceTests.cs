@@ -255,4 +255,59 @@ public class MissionCommandServiceTests
         result.Value!.Status.Should().Be(MissionStatus.Cancelled);
         drone.Status.Should().Be(DroneStatus.Available);
     }
+
+
+
+    /// <summary>
+    /// Happy path : a mission programmed changes its date to start and continue in way planned.
+    /// </summary>
+    [Fact]
+    public async Task Handle_RescheduleMissionCommand_WhenPlanned_ShouldUpdateDate_MI006()
+    {
+        // Arrange
+        var mission = new Mission("MS-RESCH-01", 1, 1, "Area", "Crop", DateTimeOffset.UtcNow.AddDays(1), 10m);
+        await _missionRepository.AddAsync(mission);
+        var newDate = DateTimeOffset.UtcNow.AddDays(6);
+
+        // Act
+        var result = await _service.Handle(new RescheduleMissionCommand(mission.Id.Value, newDate));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ScheduledAt.Should().Be(newDate);
+        result.Value.Status.Should().Be(MissionStatus.Planned);
+    }
+
+    /// <summary>
+    /// Don't exist a mission
+    /// </summary>
+    [Fact]
+    public async Task Handle_RescheduleMissionCommand_WhenMissionDoesNotExist_ShouldReturnNotFound()
+    {
+        // Act
+        var result = await _service.Handle(new RescheduleMissionCommand(999, DateTimeOffset.UtcNow.AddDays(2)));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("MissionNotFound");
+    }
+
+    /// <summary>
+    /// Past date. The reSchedule needs another date before the current date
+    /// </summary>
+    [Fact]
+    public async Task Handle_RescheduleMissionCommand_WithPastDate_ShouldReturnValidationError()
+    {
+        // Arrange
+        var mission = new Mission("MS-RESCH-02", 1, 1, "Area", "Crop", DateTimeOffset.UtcNow.AddDays(1), 10m);
+        await _missionRepository.AddAsync(mission);
+
+        // Act
+        var result = await _service.Handle(new RescheduleMissionCommand(mission.Id.Value, DateTimeOffset.UtcNow.AddDays(-1)));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("MissionRescheduleDateInPast");
+    }
+
 }
