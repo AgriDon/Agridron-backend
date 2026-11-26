@@ -39,5 +39,9 @@ public sealed class CreateParcelResource
     [MaxLength(Parcel.MaxImageUrlLength)]
     public string? Image { get; init; }
 
+    /// <summary>Optional notes describing physical obstacles (poles, power lines, tall trees).</summary>
+    [MaxLength(Parcel.MaxObstacleNotesLength)]
+    public string? ObstacleNotes { get; init; }
+
     public string? EffectiveImageUrl => !string.IsNullOrWhiteSpace(ImageUrl) ? ImageUrl : Image;
 }

@@ -162,6 +162,11 @@ namespace Agridron.Backend.API.Infrastructure.Persistence.EntityFrameworkCore.Mi
                         .HasColumnType("varchar(120)")
                         .HasColumnName("name");
 
+                    b.Property<string>("ObstacleNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("obstacle_notes");
+
                     b.Property<string>("PhenologicalStage")
                         .HasMaxLength(60)
                         .HasColumnType("varchar(60)")

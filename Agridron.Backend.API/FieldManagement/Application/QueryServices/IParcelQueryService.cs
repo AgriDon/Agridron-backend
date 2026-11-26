@@ -16,11 +16,15 @@ public interface IParcelQueryService
     Task<Result<PagedResult<Parcel>>> Handle(GetParcelsByFarmIdQuery query, CancellationToken cancellationToken = default);
 
     /// <summary>Finds a parcel by its identifier.</summary>
-    Task<Result<Parcel>> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<Result<Parcel>> GetByIdAsync(
+        long id,
+        bool includeInactive = false,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Lists parcels, optionally filtered by farm.</summary>
     Task<Result<PagedResult<Parcel>>> ListAsync(
         long? farmId,
         PaginationParameters pagination,
+        bool includeInactive = false,
         CancellationToken cancellationToken = default);
 }

@@ -22,6 +22,7 @@ internal static class ParcelAssembler
             parcel.Geometry.GeoJson,
             parcel.PhenologicalStage,
             parcel.IsActive,
-            parcel.ImageUrl);
+            parcel.ImageUrl,
+            parcel.ObstacleNotes);
     }
 }

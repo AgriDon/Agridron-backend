@@ -28,7 +28,7 @@ public class ParcelsController(
     [HttpGet]
     [SwaggerOperation(
         Summary = "Get all parcels",
-        Description = "Retrieves active agricultural parcels, optionally filtered by farm ID with pagination support.",
+        Description = "Retrieves agricultural parcels (active by default, or including inactive when includeInactive=true), optionally filtered by farm ID with pagination support.",
         OperationId = "GetParcels")]
     [SwaggerResponse(StatusCodes.Status200OK, "List of parcels retrieved successfully", typeof(IEnumerable<ParcelResource>))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid query parameters")]
@@ -36,10 +36,11 @@ public class ParcelsController(
         [FromQuery] long? farmId,
         [FromQuery] int? page,
         [FromQuery] int? size,
-        CancellationToken cancellationToken)
+        [FromQuery] bool includeInactive = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = PaginationParameters.Create(page, size);
-        var query = new GetParcelsByFarmIdQuery(farmId, pagination);
+        var query = new GetParcelsByFarmIdQuery(farmId, pagination, includeInactive);
         var result = await parcelQueryService.Handle(query, cancellationToken);
 
         if (result.IsFailure)
@@ -61,13 +62,16 @@ public class ParcelsController(
     [HttpGet("{id:long}", Name = "GetParcelById")]
     [SwaggerOperation(
         Summary = "Get parcel by ID",
-        Description = "Retrieves details and boundary polygon of a specific parcel by its ID.",
+        Description = "Retrieves details and boundary polygon of a specific parcel by its ID (set includeInactive=true to include deactivated parcels).",
         OperationId = "GetParcelById")]
     [SwaggerResponse(StatusCodes.Status200OK, "Parcel found successfully", typeof(ParcelResource))]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Parcel not found or inactive")]
-    public async Task<IActionResult> GetParcelByIdAsync(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetParcelByIdAsync(
+        long id,
+        [FromQuery] bool includeInactive = false,
+        CancellationToken cancellationToken = default)
     {
-        var query = new GetParcelByIdQuery(id);
+        var query = new GetParcelByIdQuery(id, includeInactive);
         var result = await parcelQueryService.Handle(query, cancellationToken);
 
         return result.IsSuccess
@@ -138,6 +142,24 @@ public class ParcelsController(
 
         return result.IsSuccess
             ? NoContent()
+            : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
+    }
+
+    /// <summary>Reactivates an inactive parcel.</summary>
+    [HttpPost("{id:long}/activate")]
+    [SwaggerOperation(
+        Summary = "Activate parcel",
+        Description = "Reactivates a previously deactivated agricultural parcel so it can be used in active operations again.",
+        OperationId = "ActivateParcel")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Parcel activated successfully", typeof(ParcelResource))]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Parcel not found")]
+    public async Task<IActionResult> ActivateParcelAsync(long id, CancellationToken cancellationToken)
+    {
+        var command = new ActivateParcelCommand(id);
+        var result = await parcelCommandService.Handle(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(ParcelAssembler.ToResourceFrom(result.Value!))
             : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
     }
 }

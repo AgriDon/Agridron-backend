@@ -9,4 +9,5 @@ public sealed record CreateParcelCommand(
     string Name,
     string Geometry,
     string? PhenologicalStage = null,
-    string? ImageUrl = null);
+    string? ImageUrl = null,
+    string? ObstacleNotes = null);
