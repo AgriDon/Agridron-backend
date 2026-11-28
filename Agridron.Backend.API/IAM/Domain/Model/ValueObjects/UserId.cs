@@ -12,7 +12,7 @@ public readonly record struct UserId(long Value)
     {
         if (value <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(value), "A user id must be greater than zero.");
+            throw new ArgumentOutOfRangeException(nameof(value), "El identificador de usuario debe ser mayor que cero.");
         }
 
         return new UserId(value);

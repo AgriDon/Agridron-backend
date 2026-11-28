@@ -6,37 +6,37 @@ namespace Agridron.Backend.API.IAM.Domain.Model.Errors;
 public static class IamErrors
 {
     public static readonly Error FullNameRequired =
-        Error.Validation("UserFullNameRequired", "The user full name is required.");
+        Error.Validation("UserFullNameRequired", "El nombre completo es obligatorio.");
 
     public static readonly Error FullNameTooLong =
-        Error.Validation("UserFullNameTooLong", "The user full name cannot exceed 150 characters.");
+        Error.Validation("UserFullNameTooLong", "El nombre completo no puede exceder los 150 caracteres.");
 
     public static readonly Error EmailRequired =
-        Error.Validation("UserEmailRequired", "The email address is required.");
+        Error.Validation("UserEmailRequired", "El correo electrónico es obligatorio.");
 
     public static readonly Error EmailTooLong =
-        Error.Validation("UserEmailTooLong", "The email address cannot exceed 255 characters.");
+        Error.Validation("UserEmailTooLong", "El correo electrónico no puede exceder los 255 caracteres.");
 
     public static readonly Error EmailInvalid =
-        Error.Validation("UserEmailInvalid", "The email address format is invalid.");
+        Error.Validation("UserEmailInvalid", "El formato del correo electrónico no es válido.");
 
     public static readonly Error PasswordRequired =
-        Error.Validation("UserPasswordRequired", "The password is required.");
+        Error.Validation("UserPasswordRequired", "La contraseña es obligatoria.");
 
     public static readonly Error PasswordTooShort =
-        Error.Validation("UserPasswordTooShort", "The password must be at least 8 characters long.");
+        Error.Validation("UserPasswordTooShort", "La contraseña debe tener al menos 8 caracteres.");
 
     public static readonly Error PasswordTooLong =
-        Error.Validation("UserPasswordTooLong", "The password cannot exceed 128 characters.");
+        Error.Validation("UserPasswordTooLong", "La contraseña no puede exceder los 128 caracteres.");
 
     public static readonly Error PasswordHashRequired =
-        Error.Validation("UserPasswordHashRequired", "The password hash is required.");
+        Error.Validation("UserPasswordHashRequired", "El hash de la contraseña es obligatorio.");
 
     public static readonly Error PhoneNumberTooLong =
-        Error.Validation("UserPhoneNumberTooLong", "The phone number cannot exceed 30 characters.");
+        Error.Validation("UserPhoneNumberTooLong", "El número de teléfono no puede exceder los 30 caracteres.");
 
     public static readonly Error UserIdInvalid =
-        Error.Validation("UserIdInvalid", "The user identifier must be greater than zero.");
+        Error.Validation("UserIdInvalid", "El identificador de usuario debe ser mayor que cero.");
 
     public static readonly Error InvalidVerificationToken =
         Error.Validation("InvalidVerificationToken", "El enlace de verificación no es válido o ya expiró.");
@@ -51,7 +51,7 @@ public static class IamErrors
         Error.Unexpected("JwtSecretNotConfigured", "La clave de firma JWT no está configurada.");
 
     public static Error InvalidRole(string role) =>
-        Error.Validation("UserRoleInvalid", $"The role '{role}' is not valid.");
+        Error.Validation("UserRoleInvalid", $"El rol '{role}' no es válido.");
 
     public static Error EmailAlreadyExists(string email) =>
         Error.Conflict("EmailAlreadyExists", $"Ya existe una cuenta registrada con el correo electrónico '{email}'.");
