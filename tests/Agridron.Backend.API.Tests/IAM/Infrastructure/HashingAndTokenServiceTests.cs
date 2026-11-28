@@ -100,8 +100,9 @@ public class HashingAndTokenServiceTests
         var act = () => tokenService.GenerateToken(user);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .Which.Error.Code.Should().Be("JwtSecretNotConfigured");
+        var error = act.Should().Throw<DomainException>().Which.Error;
+        error.Code.Should().Be("JwtSecretNotConfigured");
+        error.Message.Should().Be("La clave de firma JWT no está configurada.");
     }
 
     private static void SetUserId(User user, long id)
