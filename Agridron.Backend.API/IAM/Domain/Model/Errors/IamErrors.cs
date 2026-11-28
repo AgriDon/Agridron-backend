@@ -42,13 +42,13 @@ public static class IamErrors
         Error.Validation("InvalidVerificationToken", "The email verification token is invalid or has already been used.");
 
     public static readonly Error InvalidCredentials =
-        Error.Unauthorized("InvalidCredentials", "Invalid email or password.");
+        Error.Unauthorized("InvalidCredentials", "Correo electrónico o contraseña incorrectos.");
 
     public static readonly Error UserInactive =
-        Error.Forbidden("UserInactive", "The user account is inactive.");
+        Error.Forbidden("UserInactive", "La cuenta de usuario se encuentra inactiva.");
 
     public static readonly Error JwtSecretNotConfigured =
-        Error.Unexpected("JwtSecretNotConfigured", "JWT signing key is not configured.");
+        Error.Unexpected("JwtSecretNotConfigured", "La clave de firma JWT no está configurada.");
 
     public static Error InvalidRole(string role) =>
         Error.Validation("UserRoleInvalid", $"The role '{role}' is not valid.");
@@ -57,13 +57,13 @@ public static class IamErrors
         Error.Conflict("EmailAlreadyExists", $"A user with email '{email}' already exists.");
 
     public static Error UserNotFound(long id) =>
-        Error.NotFound("UserNotFound", $"User with id {id} was not found.");
+        Error.NotFound("UserNotFound", $"No se encontró el usuario con identificador {id}.");
 
     public static Error UserNotFoundByEmail(string email) =>
-        Error.NotFound("UserNotFound", $"User with email '{email}' was not found.");
+        Error.NotFound("UserNotFound", $"No se encontró un usuario registrado con el correo '{email}'.");
 
     public static Error ForbiddenProfileAccess(long targetUserId) =>
         Error.Forbidden(
             "ForbiddenProfileAccess",
-            $"You do not have permission to modify user with id {targetUserId}.");
+            $"No tienes permisos para modificar al usuario con identificador {targetUserId}.");
 }
