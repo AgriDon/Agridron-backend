@@ -71,6 +71,7 @@ public class UserCommandServiceTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Conflict);
         result.Error.Code.Should().Be("EmailAlreadyExists");
+        result.Error.Message.Should().Be("Ya existe una cuenta registrada con el correo electrónico 'duplicate@agridron.pe'.");
     }
 
     [Fact]
@@ -123,10 +124,12 @@ public class UserCommandServiceTests
         secondAttempt.IsFailure.Should().BeTrue();
         secondAttempt.Error!.Type.Should().Be(ErrorType.Validation);
         secondAttempt.Error.Code.Should().Be("InvalidVerificationToken");
+        secondAttempt.Error.Message.Should().Be("El enlace de verificación no es válido o ya expiró.");
 
         unknownTokenAttempt.IsFailure.Should().BeTrue();
         unknownTokenAttempt.Error!.Type.Should().Be(ErrorType.Validation);
         unknownTokenAttempt.Error.Code.Should().Be("InvalidVerificationToken");
+        unknownTokenAttempt.Error.Message.Should().Be("El enlace de verificación no es válido o ya expiró.");
     }
 
     [Fact]
@@ -159,6 +162,7 @@ public class UserCommandServiceTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Unauthorized);
         result.Error.Code.Should().Be("InvalidCredentials");
+        result.Error.Message.Should().Be("Correo electrónico o contraseña incorrectos.");
     }
 
     [Fact]
@@ -175,6 +179,7 @@ public class UserCommandServiceTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Forbidden);
         result.Error.Code.Should().Be("UserInactive");
+        result.Error.Message.Should().Be("La cuenta de usuario se encuentra inactiva.");
     }
 
     [Fact]

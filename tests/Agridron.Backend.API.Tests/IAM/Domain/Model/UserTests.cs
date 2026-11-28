@@ -52,8 +52,9 @@ public class UserTests
         var act = () => UserRole.FromName("UnknownRole");
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .Which.Error.Code.Should().Be("UserRoleInvalid");
+        var error = act.Should().Throw<DomainException>().Which.Error;
+        error.Code.Should().Be("UserRoleInvalid");
+        error.Message.Should().Be("El rol 'UnknownRole' no es válido.");
     }
 
     [Theory]
@@ -68,7 +69,8 @@ public class UserTests
         var act = () => EmailAddress.Create(rawEmail);
 
         // Assert
-        act.Should().Throw<DomainException>();
+        var error = act.Should().Throw<DomainException>().Which.Error;
+        error.Message.Should().Contain("correo electrónico");
     }
 
     [Fact]
@@ -113,8 +115,9 @@ public class UserTests
         var act = () => user.UpdateProfile("   ", null);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .Which.Error.Code.Should().Be("UserFullNameRequired");
+        var error = act.Should().Throw<DomainException>().Which.Error;
+        error.Code.Should().Be("UserFullNameRequired");
+        error.Message.Should().Be("El nombre completo es obligatorio.");
     }
 
     [Fact]
