@@ -13,14 +13,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Agridron.Backend.API.IAM.Application.Internal.CommandServices;
 
-/// <summary>
-///     Application command service orchestrating user registration, email verification, sign-in, sign-out, and profile updates.
-/// </summary>
-/// <remarks>
-///     Design Pattern: Coordinates Repository, Unit of Work, Strategy (<see cref="IHashingService" />,
-///     <see cref="ITokenService" />, <see cref="IBrevoEmailService" />), and Factory Method (<see cref="User.Register" />,
-///     <see cref="UserRoleExtensions" />, <see cref="EmailAddress.Create" />) patterns.
-/// </remarks>
 internal sealed class UserCommandService(
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
@@ -29,7 +21,6 @@ internal sealed class UserCommandService(
     IBrevoEmailService brevoEmailService,
     ILogger<UserCommandService> logger) : IUserCommandService
 {
-    /// <inheritdoc />
     public async Task<Result<User>> Handle(SignUpCommand command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -66,7 +57,6 @@ internal sealed class UserCommandService(
         }
     }
 
-    /// <inheritdoc />
     public async Task<Result<(User User, string Token)>> Handle(
         SignInCommand command,
         CancellationToken cancellationToken = default)
@@ -116,7 +106,6 @@ internal sealed class UserCommandService(
         }
     }
 
-    /// <inheritdoc />
     public async Task<Result> Handle(SignOutCommand command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -140,7 +129,6 @@ internal sealed class UserCommandService(
         return Result.Success();
     }
 
-    /// <inheritdoc />
     public async Task<Result<User>> Handle(
         UpdateUserProfileCommand command,
         CancellationToken cancellationToken = default)
@@ -168,7 +156,6 @@ internal sealed class UserCommandService(
         }
     }
 
-    /// <inheritdoc />
     public async Task<Result<User>> Handle(VerifyEmailCommand command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);

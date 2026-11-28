@@ -9,12 +9,8 @@ using Agridron.Backend.API.Shared.Domain.Model.Exceptions;
 
 namespace Agridron.Backend.API.IAM.Application.Internal.QueryServices;
 
-/// <summary>
-///     Application query service implementing read-only user lookup use cases.
-/// </summary>
 internal sealed class UserQueryService(IUserRepository userRepository) : IUserQueryService
 {
-    /// <inheritdoc />
     public async Task<Result<User>> Handle(GetUserByIdQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -26,7 +22,6 @@ internal sealed class UserQueryService(IUserRepository userRepository) : IUserQu
             : Result<User>.Success(user);
     }
 
-    /// <inheritdoc />
     public async Task<Result<User>> Handle(GetUserByEmailQuery query, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -48,7 +43,6 @@ internal sealed class UserQueryService(IUserRepository userRepository) : IUserQu
             : Result<User>.Success(user);
     }
 
-    /// <inheritdoc />
     public async Task<Result<PagedResult<User>>> Handle(
         GetAllUsersQuery query,
         CancellationToken cancellationToken = default)
