@@ -19,5 +19,11 @@ public enum ErrorType
     BusinessRule = 3,
 
     /// <summary>An unexpected failure.</summary>
-    Unexpected = 4
+    Unexpected = 4,
+
+    /// <summary>The caller is not authenticated.</summary>
+    Unauthorized = 5,
+
+    /// <summary>The caller lacks permission for the requested operation.</summary>
+    Forbidden = 6
 }

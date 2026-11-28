@@ -51,4 +51,16 @@ public record Error(
     {
         return new Error(code, message, ErrorType.Unexpected, details);
     }
+
+    /// <summary>Creates an unauthorized error.</summary>
+    public static Error Unauthorized(string code, string message, string? details = null)
+    {
+        return new Error(code, message, ErrorType.Unauthorized, details);
+    }
+
+    /// <summary>Creates a forbidden error.</summary>
+    public static Error Forbidden(string code, string message, string? details = null)
+    {
+        return new Error(code, message, ErrorType.Forbidden, details);
+    }
 }

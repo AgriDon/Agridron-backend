@@ -9,6 +9,7 @@ si cambian, se crea un ADR nuevo que reemplaza al anterior.
 | [0001](0001-modular-monolith-single-project.md) | Monolito modular en un único proyecto | Aceptado |
 | [0002](0002-mysql-with-native-geometry.md) | MySQL 8 con columna espacial nativa | Aceptado |
 | [0003](0003-result-pattern-over-exceptions.md) | Result pattern en lugar de excepciones de negocio | Aceptado |
+| [0004](0004-jwt-bcrypt-and-brevo-for-iam.md) | JWT Bearer, BCrypt y Brevo (HTTP nativo) para el Bounded Context IAM | Aceptado |
 
 ## Cómo agregar un ADR
 

@@ -1,7 +1,11 @@
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using Agridron.Backend.API.FieldManagement.Application.CommandServices;
 using Agridron.Backend.API.FieldManagement.Application.Internal.CommandServices;
 using Agridron.Backend.API.FieldManagement.Application.Internal.QueryServices;
 using Agridron.Backend.API.FieldManagement.Application.QueryServices;
+using Agridron.Backend.API.Shared.Domain.Model;
 using Agridron.Backend.API.Shared.Domain.Repositories;
 using Agridron.Backend.API.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Agridron.Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration;
@@ -14,8 +18,10 @@ using Agridron.Backend.API.Shared.Resources;
 using Agridron.Backend.API.Shared.Resources.Errors;
 using Cortex.Mediator.Commands;
 using Cortex.Mediator.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -78,6 +84,80 @@ builder.Services.AddSingleton<ProblemDetailsFactory>();
 builder.Services.AddScoped<AuditableEntityInterceptor>();
 builder.Services.AddScoped<DomainEventInterceptor>();
 
+// Authentication & Authorization (JWT Bearer)
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtIssuer = jwtSection["Issuer"];
+var jwtAudience = jwtSection["Audience"];
+var jwtSecret = ResolveConfigSecret(jwtSection["Secret"]);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = !string.IsNullOrWhiteSpace(jwtIssuer),
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = !string.IsNullOrWhiteSpace(jwtAudience),
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
+            ? null
+            : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.FromMinutes(1)
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            var localizer = context.HttpContext.RequestServices.GetRequiredService<IStringLocalizer<ErrorMessages>>();
+            var error = Error.Unauthorized("Unauthorized", localizer["Unauthorized"]);
+            var problemDetails = error.ToProblemDetails(context.HttpContext);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        },
+        OnForbidden = async context =>
+        {
+            var localizer = context.HttpContext.RequestServices.GetRequiredService<IStringLocalizer<ErrorMessages>>();
+            var error = Error.Forbidden("Forbidden", localizer["Forbidden"]);
+            var problemDetails = error.ToProblemDetails(context.HttpContext);
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Brevo Transactional Email HTTP Client (IHttpClientFactory)
+builder.Services.AddHttpClient("Brevo", client =>
+{
+    var brevoSection = builder.Configuration.GetSection("Brevo");
+    var apiUrl = brevoSection["ApiUrl"];
+    if (!string.IsNullOrWhiteSpace(apiUrl) && Uri.TryCreate(apiUrl, UriKind.Absolute, out var baseUri))
+    {
+        client.BaseAddress = baseUri;
+    }
+
+    client.Timeout = TimeSpan.FromSeconds(15);
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+    var apiKey = ResolveConfigSecret(brevoSection["ApiKey"]);
+    if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("api-key", apiKey);
+    }
+});
+
 // Swagger / OpenAPI Configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -89,6 +169,19 @@ builder.Services.AddSwaggerGen(options =>
             Version = "v1",
             Description = "Agridron Platform Backend API"
         });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. Enter your token below."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
     options.EnableAnnotations();
 });
 
@@ -216,9 +309,29 @@ app.UseCors("AllowAllPolicy");
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();
+
+static string? ResolveConfigSecret(string? rawValue)
+{
+    if (string.IsNullOrWhiteSpace(rawValue))
+    {
+        return null;
+    }
+
+    var trimmed = rawValue.Trim();
+    if (trimmed.StartsWith("${", StringComparison.Ordinal) && trimmed.EndsWith("}", StringComparison.Ordinal))
+    {
+        var envVarName = trimmed[2..^1].Trim();
+        var envValue = Environment.GetEnvironmentVariable(envVarName);
+        return string.IsNullOrWhiteSpace(envValue) ? null : envValue;
+    }
+
+    var expanded = Environment.ExpandEnvironmentVariables(trimmed);
+    return string.IsNullOrWhiteSpace(expanded) ? null : expanded;
+}

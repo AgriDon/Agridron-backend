@@ -6,4 +6,10 @@
   <data name="OperationCancelled" xml:space="preserve">
     <value>La operación fue cancelada.</value>
   </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Se requiere autenticación para acceder a este recurso.</value>
+  </data>
+  <data name="Forbidden" xml:space="preserve">
+    <value>No tienes permisos para realizar esta acción.</value>
+  </data>
 </root>

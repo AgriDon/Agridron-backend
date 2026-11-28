@@ -20,6 +20,8 @@ public static class ErrorProblemDetailsMapper
         return error.Type switch
         {
             ErrorType.Validation => StatusCodes.Status400BadRequest,
+            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+            ErrorType.Forbidden => StatusCodes.Status403Forbidden,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.BusinessRule => StatusCodes.Status422UnprocessableEntity,
@@ -35,6 +37,8 @@ public static class ErrorProblemDetailsMapper
         return error.Type switch
         {
             ErrorType.Validation => "Validation Error",
+            ErrorType.Unauthorized => "Unauthorized",
+            ErrorType.Forbidden => "Forbidden",
             ErrorType.NotFound => "Resource Not Found",
             ErrorType.Conflict => "Resource Conflict",
             ErrorType.BusinessRule => "Business Rule Violation",
