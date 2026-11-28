@@ -38,7 +38,7 @@ public class UserTests
     [InlineData("ADMIN", UserRole.Admin)]
     public void UserRoleFromName_WhenValidOrBlank_ShouldResolveExpectedRole(string? roleName, UserRole expectedRole)
     {
-        // Act
+        // Arrange & Act
         var resolved = UserRole.FromName(roleName);
 
         // Assert
@@ -48,8 +48,8 @@ public class UserTests
     [Fact]
     public void UserRoleFromName_WhenInvalid_ShouldThrowDomainException()
     {
-        // Act
-        var act = () => UserRole.FromName("SuperHacker");
+        // Arrange & Act
+        var act = () => UserRole.FromName("UnknownRole");
 
         // Assert
         act.Should().Throw<DomainException>()

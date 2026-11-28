@@ -59,13 +59,8 @@ innecesarios o secretos en texto plano dentro del repositorio.
 
 ## Applied Software Design Patterns
 
-The `IAM` bounded context explicitly applies the following object-oriented and enterprise design
-patterns to enforce DDD boundaries, testability, and maintainability:
-
-| Pattern | IAM Components | Architectural Rationale |
-|---|---|---|
-| **Factory Method** | `User.Register`, `EmailAddress.Create`, `UserRole.FromName`, `IamErrors` | Centralizes invariant validation, default state initialization (`EmailVerified = false`, cryptographic verification token, default `Farmer` role), and strongly categorized `Error` creation without exposing raw construction details. |
-| **Strategy** | `IHashingService` / `HashingService`, `ITokenService` / `TokenService`, `IBrevoEmailService` / `BrevoEmailService` | Decouples password hashing (BCrypt), token issuance (HMAC-SHA256 JWT), and transactional email delivery (Brevo REST v3) behind application ports so algorithms or external providers can be swapped or mocked cleanly in unit tests. |
-| **Repository & Unit of Work** | `IUserRepository` / `UserRepository`, `IUnitOfWork` | Abstracts EF Core persistence and coordinates atomic database commits and post-commit domain event publication (`DomainEventInterceptor`) per use case. |
-| **Facade & Anti-Corruption Layer (ACL)** | `IIamContextFacade` / `IamContextFacade`, `UserSnapshotDto` | Exposes a minimal, stable cross-context read boundary so `FieldManagement` and `FlightOperations` can verify user existence/status without referencing IAM aggregates or value objects. |
-| **Assembler / DTO** | `*Assembler.cs`, `*Resource.cs` | Performs explicit, reflection-free, compile-time-checked translation between HTTP request/response payloads and domain commands/aggregates, preventing sensitive fields (e.g., `PasswordHash`, `EmailVerificationToken`) from leaking over REST. |
+- **Factory Method** (`User.Register`, `EmailAddress.Create`, `UserRole.FromName`, `IamErrors`): enforces domain invariants, default account state, verification token generation, and typed error construction.
+- **Strategy** (`IHashingService` / `HashingService`, `ITokenService` / `TokenService`, `IBrevoEmailService` / `BrevoEmailService`): isolates password hashing, JWT signing, and email delivery behind application ports for provider substitution and unit testing.
+- **Repository & Unit of Work** (`IUserRepository` / `UserRepository`, `IUnitOfWork`): decouples persistence queries from EF Core and coordinates transactional commits with post-commit domain event dispatch.
+- **Facade / Anti-Corruption Layer** (`IIamContextFacade` / `IamContextFacade`, `UserSnapshotDto`): exposes read-only user lookups to other bounded contexts without leaking IAM domain types.
+- **Assembler / DTO** (`*Assembler`, `*Resource`): maps HTTP payloads to commands and aggregates to response models without exposing sensitive fields such as `PasswordHash` or `EmailVerificationToken`.
