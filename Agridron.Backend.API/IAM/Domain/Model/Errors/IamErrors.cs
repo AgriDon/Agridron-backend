@@ -39,7 +39,7 @@ public static class IamErrors
         Error.Validation("UserIdInvalid", "The user identifier must be greater than zero.");
 
     public static readonly Error InvalidVerificationToken =
-        Error.Validation("InvalidVerificationToken", "The email verification token is invalid or has already been used.");
+        Error.Validation("InvalidVerificationToken", "El enlace de verificación no es válido o ya expiró.");
 
     public static readonly Error InvalidCredentials =
         Error.Unauthorized("InvalidCredentials", "Correo electrónico o contraseña incorrectos.");
@@ -54,7 +54,7 @@ public static class IamErrors
         Error.Validation("UserRoleInvalid", $"The role '{role}' is not valid.");
 
     public static Error EmailAlreadyExists(string email) =>
-        Error.Conflict("EmailAlreadyExists", $"A user with email '{email}' already exists.");
+        Error.Conflict("EmailAlreadyExists", $"Ya existe una cuenta registrada con el correo electrónico '{email}'.");
 
     public static Error UserNotFound(long id) =>
         Error.NotFound("UserNotFound", $"No se encontró el usuario con identificador {id}.");
