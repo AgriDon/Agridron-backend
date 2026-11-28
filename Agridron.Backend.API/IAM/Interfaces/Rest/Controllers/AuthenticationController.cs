@@ -84,7 +84,7 @@ public class AuthenticationController(
             user.Id.Value,
             user.Email.Value,
             user.EmailVerified,
-            "Email verified successfully."));
+            "Correo electrónico verificado correctamente."));
     }
 
     /// <summary>Authenticates a user and issues a signed JWT.</summary>
