@@ -55,14 +55,19 @@ internal static class IamGuard
             throw new DomainException(IamErrors.PasswordRequired);
         }
 
-        if (password.Length < minLength)
-        {
-            throw new DomainException(IamErrors.PasswordTooShort);
-        }
-
         if (password.Length > maxLength)
         {
             throw new DomainException(IamErrors.PasswordTooLong);
+        }
+
+        var hasUpper = password.Any(ch => ch is >= 'A' and <= 'Z');
+        var hasLower = password.Any(ch => ch is >= 'a' and <= 'z');
+        var hasDigit = password.Any(ch => ch is >= '0' and <= '9');
+        var hasSpecial = password.Any(ch => !char.IsLetterOrDigit(ch) && !char.IsWhiteSpace(ch));
+
+        if (password.Length < minLength || !hasUpper || !hasLower || !hasDigit || !hasSpecial)
+        {
+            throw new DomainException(IamErrors.PasswordTooWeak);
         }
     }
 }

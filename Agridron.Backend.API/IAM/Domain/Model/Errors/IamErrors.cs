@@ -29,6 +29,11 @@ public static class IamErrors
     public static readonly Error PasswordTooLong =
         Error.Validation("UserPasswordTooLong", "La contraseña no puede exceder los 128 caracteres.");
 
+    public static readonly Error PasswordTooWeak =
+        Error.Validation(
+            "UserPasswordTooWeak",
+            "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.");
+
     public static readonly Error PasswordHashRequired =
         Error.Validation("UserPasswordHashRequired", "El hash de la contraseña es obligatorio.");
 
@@ -46,6 +51,11 @@ public static class IamErrors
 
     public static readonly Error UserInactive =
         Error.Forbidden("UserInactive", "La cuenta de usuario se encuentra inactiva.");
+
+    public static readonly Error EmailNotVerified =
+        Error.Forbidden(
+            "EmailNotVerified",
+            "Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
 
     public static readonly Error JwtSecretNotConfigured =
         Error.Unexpected("JwtSecretNotConfigured", "La clave de firma JWT no está configurada.");
