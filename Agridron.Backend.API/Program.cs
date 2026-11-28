@@ -261,6 +261,22 @@ builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.A
 builder.Services.AddScoped<Agridron.Backend.API.InventoryAndResourceManagement.Application.QueryServices.INozzleQueryService,
     Agridron.Backend.API.InventoryAndResourceManagement.Application.Internal.QueryServices.NozzleQueryService>();
 
+// Dependency Injection - IAM Bounded Context
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Domain.Repositories.IUserRepository,
+    Agridron.Backend.API.IAM.Infrastructure.Persistence.EntityFrameworkCore.Repositories.UserRepository>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Application.Internal.OutboundServices.IHashingService,
+    Agridron.Backend.API.IAM.Infrastructure.Hashing.BCrypt.Services.HashingService>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Application.Internal.OutboundServices.ITokenService,
+    Agridron.Backend.API.IAM.Infrastructure.Tokens.JWT.Services.TokenService>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Application.Internal.OutboundServices.IBrevoEmailService,
+    Agridron.Backend.API.IAM.Infrastructure.Email.Brevo.Services.BrevoEmailService>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Application.CommandServices.IUserCommandService,
+    Agridron.Backend.API.IAM.Application.Internal.CommandServices.UserCommandService>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Application.QueryServices.IUserQueryService,
+    Agridron.Backend.API.IAM.Application.Internal.QueryServices.UserQueryService>();
+builder.Services.AddScoped<Agridron.Backend.API.IAM.Interfaces.ACL.IIamContextFacade,
+    Agridron.Backend.API.IAM.Application.ACL.IamContextFacade>();
+
 
 
 
