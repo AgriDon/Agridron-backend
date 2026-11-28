@@ -132,19 +132,65 @@ public class UserCommandServiceTests
         unknownTokenAttempt.Error.Message.Should().Be("El enlace de verificación no es válido o ya expiró.");
     }
 
+    [Theory]
+    [InlineData("123456789")]
+    [InlineData("weakpass1")]
+    [InlineData("WeakPass1")]
+    [InlineData("WEAKPASS1!")]
+    [InlineData("weakpass1!")]
+    [InlineData("Wk1!")]
+    public async Task HandleSignUp_WhenPasswordIsWeak_ShouldReturnValidationErrorAsync(string weakPassword)
+    {
+        // Arrange
+        var command = new SignUpCommand("Weak User", "weak@agridron.pe", weakPassword, null);
+
+        // Act
+        var result = await _service.Handle(command);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ErrorType.Validation);
+        result.Error.Code.Should().Be("UserPasswordTooWeak");
+        result.Error.Message.Should().Be("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.");
+    }
+
+    [Fact]
+    public async Task HandleSignIn_WhenEmailIsNotVerified_ShouldReturnForbiddenAndAllowAfterVerificationAsync()
+    {
+        // Arrange
+        var signUpResult = await _service.Handle(new SignUpCommand("Pending User", "pending@agridron.pe", "Secret123!", null));
+        var token = signUpResult.Value!.EmailVerificationToken!;
+
+        // Act
+        var unverifiedResult = await _service.Handle(new SignInCommand("pending@agridron.pe", "Secret123!"));
+        await _service.Handle(new VerifyEmailCommand(token));
+        var verifiedResult = await _service.Handle(new SignInCommand("pending@agridron.pe", "Secret123!"));
+
+        // Assert
+        unverifiedResult.IsFailure.Should().BeTrue();
+        unverifiedResult.Error!.Type.Should().Be(ErrorType.Forbidden);
+        unverifiedResult.Error.Code.Should().Be("EmailNotVerified");
+        unverifiedResult.Error.Message.Should().Be("Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.");
+
+        verifiedResult.IsSuccess.Should().BeTrue();
+        verifiedResult.Value.Token.Should().Be($"token-for-{signUpResult.Value.Id.Value}");
+    }
+
     [Fact]
     public async Task HandleSignIn_WhenCredentialsAreValid_ShouldReturnUserAndTokenAndRaiseEventAsync()
     {
         // Arrange
-        var signUpResult = await _service.Handle(new SignUpCommand("Lucia Torres", "lucia@agridron.pe", "StrongPass123!", null));
+        var signUpResult = await _service.Handle(new SignUpCommand("Lucia Torres", "lucia@agridron.pe", "StrongPass1#", null));
+        await _service.Handle(new VerifyEmailCommand(signUpResult.Value!.EmailVerificationToken!));
         signUpResult.Value!.ClearDomainEvents();
 
         // Act
-        var result = await _service.Handle(new SignInCommand("LUCIA@agridron.pe", "StrongPass123!"));
+        var result = await _service.Handle(new SignInCommand("LUCIA@agridron.pe", "StrongPass1#"));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.User.Email.Value.Should().Be("lucia@agridron.pe");
+        result.Value.User.EmailVerified.Should().BeTrue();
         result.Value.Token.Should().Be($"token-for-{signUpResult.Value.Id.Value}");
         result.Value.User.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<UserSignedInEvent>();
     }

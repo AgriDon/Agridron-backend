@@ -1,6 +1,7 @@
 using System.Reflection;
 using Agridron.Backend.API.IAM.Domain.Model.Aggregates;
 using Agridron.Backend.API.IAM.Domain.Model.Events;
+using Agridron.Backend.API.IAM.Domain.Model.Validation;
 using Agridron.Backend.API.IAM.Domain.Model.ValueObjects;
 using Agridron.Backend.API.Shared.Domain.Model.Exceptions;
 
@@ -170,6 +171,34 @@ public class UserTests
         user.DomainEvents.Should().HaveCount(2);
         user.DomainEvents.OfType<UserSignedInEvent>().Should().ContainSingle(e => e.UserId == 15);
         user.DomainEvents.OfType<UserSignedOutEvent>().Should().ContainSingle(e => e.UserId == 15);
+    }
+
+    [Theory]
+    [InlineData("123456789")]
+    [InlineData("abcdefgh!")]
+    [InlineData("ABCDEFGH1!")]
+    [InlineData("Abcdefgh!")]
+    [InlineData("Abcdefg1")]
+    [InlineData("Ab1!")]
+    public void ValidateRawPassword_WhenWeak_ShouldThrowDomainException(string weakPassword)
+    {
+        // Arrange & Act
+        var act = () => IamGuard.ValidateRawPassword(weakPassword, User.MinPasswordLength, User.MaxPasswordLength);
+
+        // Assert
+        var error = act.Should().Throw<DomainException>().Which.Error;
+        error.Code.Should().Be("UserPasswordTooWeak");
+        error.Message.Should().Be("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.");
+    }
+
+    [Fact]
+    public void ValidateRawPassword_WhenStrong_ShouldNotThrow()
+    {
+        // Arrange & Act
+        var act = () => IamGuard.ValidateRawPassword("StrongPass1#", User.MinPasswordLength, User.MaxPasswordLength);
+
+        // Assert
+        act.Should().NotThrow();
     }
 
     private static void SetUserId(User user, long id)
