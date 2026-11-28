@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Agridron.Backend.API.IAM.Application.Internal.OutboundServices;
 using Agridron.Backend.API.IAM.Infrastructure.Tokens.JWT.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Agridron.Backend.API.IAM.Infrastructure.Email.Brevo.Services;
@@ -11,11 +14,19 @@ namespace Agridron.Backend.API.IAM.Infrastructure.Email.Brevo.Services;
 internal sealed class BrevoEmailService(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
+    IHostEnvironment hostEnvironment,
     ILogger<BrevoEmailService> logger) : IBrevoEmailService
 {
     public const string HttpClientName = "Brevo";
+    public const string LogoFileName = "agridron-logo.png";
 
     private const string DefaultFrontendBaseUrl = "http://localhost:5173";
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     public async Task SendWelcomeEmailAsync(
         string toEmail,
@@ -49,20 +60,21 @@ internal sealed class BrevoEmailService(
 
         var frontendBaseUrl = (brevoSection["FrontendBaseUrl"] ?? DefaultFrontendBaseUrl).Trim().TrimEnd('/');
         var verificationUrl = $"{frontendBaseUrl}/verify-email?token={Uri.EscapeDataString(verificationToken)}";
-        var htmlContent = BuildWelcomeEmailHtml(fullName, role, verificationUrl);
+        var logoBase64 = await TryLoadLogoBase64Async(cancellationToken);
+        var hasInlineLogo = !string.IsNullOrWhiteSpace(logoBase64);
+        var htmlContent = BuildWelcomeEmailHtml(fullName, role, verificationUrl, hasInlineLogo);
 
-        var payload = new
-        {
-            sender = new { name = senderName, email = senderEmail },
-            to = new[] { new { email = toEmail, name = fullName } },
-            subject = "Verifica tu correo electrónico — AgriDron Solutions",
-            htmlContent
-        };
+        var payload = new BrevoEmailPayload(
+            new BrevoEmailParty(senderName, senderEmail),
+            [new BrevoEmailParty(fullName, toEmail)],
+            "Confirma tu correo electrónico — AgriDron Solutions",
+            htmlContent,
+            hasInlineLogo ? [new BrevoAttachment(LogoFileName, logoBase64!)] : null);
 
         var client = httpClientFactory.CreateClient(HttpClientName);
         using var request = new HttpRequestMessage(HttpMethod.Post, string.Empty)
         {
-            Content = JsonContent.Create(payload)
+            Content = JsonContent.Create(payload, options: SerializerOptions)
         };
 
         if (!client.DefaultRequestHeaders.Contains("api-key"))
@@ -82,11 +94,23 @@ internal sealed class BrevoEmailService(
         logger.LogInformation("Welcome verification email accepted by Brevo (status {StatusCode}).", (int)response.StatusCode);
     }
 
-    internal static string BuildWelcomeEmailHtml(string fullName, string role, string verificationUrl)
+    internal static string BuildWelcomeEmailHtml(
+        string fullName,
+        string role,
+        string verificationUrl,
+        bool includeInlineLogo = true)
     {
         var encodedName = WebUtility.HtmlEncode(fullName);
-        var encodedRoleLabel = WebUtility.HtmlEncode(FormatRoleLabel(role));
         var encodedUrl = WebUtility.HtmlEncode(verificationUrl);
+        var introParagraph = BuildRoleIntroText(encodedName, role);
+
+        var logoCell = includeInlineLogo
+            ? $"""
+               <td width="56" valign="middle" style="padding-right: 14px;">
+                 <img src="cid:{LogoFileName}" alt="AgriDron Solutions" width="56" height="56" style="display: block; width: 56px; height: 56px; border: 0; border-radius: 50%;" />
+               </td>
+               """
+            : string.Empty;
 
         return $"""
             <!DOCTYPE html>
@@ -94,28 +118,22 @@ internal sealed class BrevoEmailService(
             <head>
               <meta charset="utf-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Verifica tu correo — AgriDron Solutions</title>
+              <title>Confirma tu correo electrónico — AgriDron Solutions</title>
             </head>
-            <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #1f2937;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; padding: 32px 16px;">
+            <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827; -webkit-font-smoothing: antialiased;">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f5f7; padding: 40px 16px;">
                 <tr>
                   <td align="center">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="540" style="max-width: 540px; width: 100%; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;">
                       <tr>
-                        <td style="background-color: #14532d; background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 32px 36px; text-align: center;">
-                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <td style="padding: 28px 36px 22px 36px; border-bottom: 1px solid #f0f1f3;">
+                          <table role="presentation" cellpadding="0" cellspacing="0">
                             <tr>
-                              <td align="center">
-                                <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.14); color: #dcfce7; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 6px 14px; border-radius: 999px;">
-                                  Precisión Agrícola con Drones
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td align="center" style="padding-top: 14px;">
-                                <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.3px;">
+                              {logoCell}
+                              <td valign="middle">
+                                <span style="font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.2px;">
                                   AgriDron Solutions
-                                </h1>
+                                </span>
                               </td>
                             </tr>
                           </table>
@@ -123,65 +141,40 @@ internal sealed class BrevoEmailService(
                       </tr>
 
                       <tr>
-                        <td style="padding: 36px 36px 28px 36px;">
-                          <h2 style="margin: 0 0 12px 0; color: #111827; font-size: 20px; font-weight: 700;">
-                            ¡Hola, {encodedName}!
-                          </h2>
-                          <p style="margin: 0 0 18px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                            Gracias por registrarte en <strong>AgriDron Solutions</strong>. Tu cuenta ha sido creada con el perfil:
+                        <td style="padding: 32px 36px 36px 36px;">
+                          <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #111827; line-height: 1.35; letter-spacing: -0.2px;">
+                            Confirma tu correo electrónico
+                          </h1>
+                          <p style="margin: 0 0 28px 0; font-size: 14px; color: #374151; line-height: 1.65;">
+                            {introParagraph}
                           </p>
 
-                          <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 22px 0;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0;">
                             <tr>
-                              <td style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px;">
-                                <span style="color: #166534; font-size: 13px; font-weight: 700;">
-                                  Rol asignado: {encodedRoleLabel}
-                                </span>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <p style="margin: 0 0 28px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                            Para confirmar la titularidad de tu correo electrónico y activar todas las funciones de gestión de fundos, parcelas y misiones de fumigación, haz clic en el siguiente botón:
-                          </p>
-
-                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 28px 0;">
-                            <tr>
-                              <td align="center">
+                              <td align="left">
                                 <a href="{encodedUrl}" target="_blank" rel="noopener noreferrer"
-                                   style="display: inline-block; background-color: #16a34a; color: #ffffff; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
-                                  Verificar mi correo electrónico
+                                   style="display: inline-block; background-color: #15803d; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 13px 28px; border-radius: 8px; line-height: 1.2;">
+                                  Confirmar correo electrónico
                                 </a>
                               </td>
                             </tr>
                           </table>
 
-                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-                            <tr>
-                              <td style="padding: 14px 16px;">
-                                <p style="margin: 0 0 6px 0; color: #4b5563; font-size: 12px; font-weight: 600;">
-                                  ¿El botón no funciona? Copia y pega este enlace en tu navegador:
-                                </p>
-                                <p style="margin: 0; word-break: break-all; font-size: 12px; line-height: 1.5;">
-                                  <a href="{encodedUrl}" style="color: #15803d; text-decoration: underline;">{encodedUrl}</a>
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
-                            <strong>Nota de seguridad:</strong> Este enlace es personal y de un solo uso. Si no creaste una cuenta en AgriDron Solutions, puedes ignorar este mensaje de forma segura.
+                          <p style="margin: 0 0 6px 0; font-size: 12px; color: #6b7280; line-height: 1.55;">
+                            Si tienes problemas con el botón, copia y pega este enlace en tu navegador:
+                          </p>
+                          <p style="margin: 0; font-size: 12px; line-height: 1.55; word-break: break-all;">
+                            <a href="{encodedUrl}" style="color: #15803d; text-decoration: underline;">{encodedUrl}</a>
                           </p>
                         </td>
                       </tr>
+                    </table>
 
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="540" style="max-width: 540px; width: 100%;">
                       <tr>
-                        <td style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 20px 36px; text-align: center;">
-                          <p style="margin: 0 0 4px 0; color: #374151; font-size: 13px; font-weight: 600;">
-                            AgriDron Solutions
-                          </p>
-                          <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
-                            Plataforma inteligente de operaciones agrícolas con drones &bull; Mensaje automático, por favor no respondas a este correo.
+                        <td align="center" style="padding: 20px 16px 0 16px;">
+                          <p style="margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5;">
+                            AgriDron Solutions &middot; Lima, Perú. Si no solicitaste esta cuenta, puedes ignorar este mensaje.
                           </p>
                         </td>
                       </tr>
@@ -194,12 +187,59 @@ internal sealed class BrevoEmailService(
             """;
     }
 
-    private static string FormatRoleLabel(string role) =>
+    private async Task<string?> TryLoadLogoBase64Async(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var candidatePaths = new[]
+            {
+                Path.Combine(hostEnvironment.ContentRootPath, "IAM", "Infrastructure", "Email", "Brevo", "Assets", LogoFileName),
+                Path.Combine(AppContext.BaseDirectory, "IAM", "Infrastructure", "Email", "Brevo", "Assets", LogoFileName)
+            };
+
+            foreach (var path in candidatePaths)
+            {
+                if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                {
+                    var bytes = await File.ReadAllBytesAsync(path, cancellationToken);
+                    if (bytes.Length > 0)
+                    {
+                        return Convert.ToBase64String(bytes);
+                    }
+                }
+            }
+
+            logger.LogWarning("Brand logo asset '{LogoFileName}' was not found. Sending email without inline logo.", LogoFileName);
+            return null;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to read brand logo asset '{LogoFileName}'. Sending email without inline logo.", LogoFileName);
+            return null;
+        }
+    }
+
+    private static string BuildRoleIntroText(string encodedName, string role) =>
         role.Trim().ToUpperInvariant() switch
         {
-            "FARMER" => "Agricultor / Farmer",
-            "OPERATOR" => "Operador / Operator",
-            "ADMIN" => "Administrador / Admin",
-            _ => role
+            "FARMER" =>
+                $"Hola {encodedName}, tu cuenta de agricultor en AgriDron Solutions ya está lista. Solo falta confirmar tu dirección de correo para empezar a gestionar tus fundos y parcelas.",
+            "OPERATOR" =>
+                $"Hola {encodedName}, tu cuenta de operador de drones en AgriDron Solutions ya está lista. Solo falta confirmar tu dirección de correo para acceder a tus misiones asignadas.",
+            "ADMIN" =>
+                $"Hola {encodedName}, tu cuenta de administrador en AgriDron Solutions ya está lista. Solo falta confirmar tu dirección de correo para acceder al panel de administración.",
+            _ =>
+                $"Hola {encodedName}, tu cuenta en AgriDron Solutions ya está lista. Solo falta confirmar tu dirección de correo para comenzar a usar la plataforma."
         };
+
+    private sealed record BrevoEmailPayload(
+        BrevoEmailParty Sender,
+        BrevoEmailParty[] To,
+        string Subject,
+        string HtmlContent,
+        BrevoAttachment[]? Attachment);
+
+    private sealed record BrevoEmailParty(string Name, string Email);
+
+    private sealed record BrevoAttachment(string Name, string Content);
 }

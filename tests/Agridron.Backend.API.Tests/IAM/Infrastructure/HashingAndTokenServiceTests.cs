@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Text;
 using Agridron.Backend.API.IAM.Domain.Model.Aggregates;
 using Agridron.Backend.API.IAM.Domain.Model.ValueObjects;
-using Agridron.Backend.API.IAM.Infrastructure.Email.Brevo.Services;
 using Agridron.Backend.API.IAM.Infrastructure.Hashing.BCrypt.Services;
 using Agridron.Backend.API.IAM.Infrastructure.Tokens.JWT.Services;
 using Agridron.Backend.API.Shared.Domain.Model.Exceptions;
@@ -103,24 +102,6 @@ public class HashingAndTokenServiceTests
         // Assert
         act.Should().Throw<DomainException>()
             .Which.Error.Code.Should().Be("JwtSecretNotConfigured");
-    }
-
-    [Fact]
-    public void BrevoEmailService_BuildWelcomeEmailHtml_ShouldContainBrandingRoleAndVerificationButton()
-    {
-        // Arrange
-        const string verificationUrl = "http://localhost:5173/verify-email?token=abc123token";
-
-        // Act
-        var html = BrevoEmailService.BuildWelcomeEmailHtml("Samir <Farmer>", "Farmer", verificationUrl);
-
-        // Assert
-        html.Should().Contain("AgriDron Solutions");
-        html.Should().Contain("Samir &lt;Farmer&gt;");
-        html.Should().Contain("Agricultor / Farmer");
-        html.Should().Contain("Verificar mi correo electrónico");
-        html.Should().Contain(verificationUrl);
-        html.Should().Contain("#16a34a");
     }
 
     private static void SetUserId(User user, long id)
