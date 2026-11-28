@@ -6,9 +6,6 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Agridron.Backend.API.IAM.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-/// <summary>
-///     Entity Framework Core Fluent API mapping configuration for the <see cref="User" /> aggregate.
-/// </summary>
 internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     private static readonly ValueConverter<UserId, long> UserIdConverter =
@@ -17,7 +14,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
     private static readonly ValueConverter<EmailAddress, string> EmailAddressConverter =
         new(v => v.Value, v => new EmailAddress(v));
 
-    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("users");

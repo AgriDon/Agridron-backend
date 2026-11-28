@@ -15,12 +15,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Agridron.Backend.API.IAM.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     HTTP REST controller exposing authenticated user profile endpoints (AU-005).
-/// </summary>
-/// <param name="userCommandService">Application command service handling profile updates.</param>
-/// <param name="userQueryService">Application query service handling user lookups.</param>
-/// <param name="problemDetailsFactory">Factory translating domain errors into RFC 7807 Problem Details.</param>
+/// <summary>REST endpoints for authenticated user profile lookup and updates.</summary>
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
@@ -31,12 +26,8 @@ public class UsersController(
     IUserQueryService userQueryService,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Retrieves a user profile by its database identifier.
-    /// </summary>
-    /// <param name="id">The target user identifier.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>200 OK</c> with <see cref="UserResource" />, or <c>404 Not Found</c>.</returns>
+    /// <summary>Retrieves a user profile by identifier.</summary>
+    /// <returns>The matching user resource.</returns>
     [HttpGet("{id:long}", Name = "GetUserById")]
     [SwaggerOperation(
         Summary = "Get user profile by ID",
@@ -54,13 +45,8 @@ public class UsersController(
             : problemDetailsFactory.CreateProblemDetails(this, result.Error!);
     }
 
-    /// <summary>
-    ///     Updates basic profile information for a user. Allowed only for the account owner or an <c>Admin</c>.
-    /// </summary>
-    /// <param name="id">The target user identifier.</param>
-    /// <param name="resource">The profile update payload.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>200 OK</c> with the updated <see cref="UserResource" />, <c>403 Forbidden</c>, or <c>404 Not Found</c>.</returns>
+    /// <summary>Updates basic profile fields for the account owner or an administrator.</summary>
+    /// <returns>The updated user resource.</returns>
     [HttpPatch("{id:long}")]
     [SwaggerOperation(
         Summary = "Update user profile",

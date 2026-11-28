@@ -13,11 +13,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Agridron.Backend.API.IAM.Interfaces.Rest.Controllers;
 
-/// <summary>
-///     HTTP REST controller exposing IAM registration, email verification, sign-in, and sign-out endpoints.
-/// </summary>
-/// <param name="userCommandService">Application command service handling IAM write workflows.</param>
-/// <param name="problemDetailsFactory">Factory translating domain errors into RFC 7807 Problem Details.</param>
+/// <summary>REST endpoints for registration, email verification, sign-in, and sign-out.</summary>
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
@@ -26,12 +22,8 @@ public class AuthenticationController(
     IUserCommandService userCommandService,
     ProblemDetailsFactory problemDetailsFactory) : ControllerBase
 {
-    /// <summary>
-    ///     Registers a new user account, generates an email verification token, and triggers welcome email delivery (AU-001).
-    /// </summary>
-    /// <param name="resource">The registration request payload.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>201 Created</c> with the created <see cref="UserResource" />, or an RFC 7807 Problem Details error.</returns>
+    /// <summary>Registers a new platform user and triggers verification email delivery.</summary>
+    /// <returns>The created user resource.</returns>
     [AllowAnonymous]
     [HttpPost("sign-up")]
     [SwaggerOperation(
@@ -57,13 +49,9 @@ public class AuthenticationController(
         return CreatedAtRoute("GetUserById", new { id = userResource.Id }, userResource);
     }
 
-    /// <summary>
-    ///     Verifies a user's email address using the single-use verification token sent during registration.
-    /// </summary>
-    /// <param name="token">The single-use URL-safe verification token.</param>
-    /// <param name="redirectUrl">Optional absolute HTTP/HTTPS frontend URL to redirect to after verification.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>200 OK</c> with <see cref="EmailVerificationResource" />, <c>302 Found</c> redirect when <paramref name="redirectUrl" /> is valid, or <c>400 Bad Request</c>.</returns>
+    /// <summary>Verifies a user's email address using a single-use verification token.</summary>
+    /// <param name="redirectUrl">Optional absolute HTTP/HTTPS redirect target on success.</param>
+    /// <returns>The verification confirmation resource or a redirect response.</returns>
     [AllowAnonymous]
     [HttpGet("verify-email")]
     [SwaggerOperation(
@@ -99,12 +87,8 @@ public class AuthenticationController(
             "Email verified successfully."));
     }
 
-    /// <summary>
-    ///     Authenticates a user and returns a signed JWT Bearer token (AU-003).
-    /// </summary>
-    /// <param name="resource">The sign-in credentials payload.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>200 OK</c> with <see cref="AuthenticatedUserResource" />, or an RFC 7807 Problem Details error.</returns>
+    /// <summary>Authenticates a user and issues a signed JWT.</summary>
+    /// <returns>The authenticated user resource including the JWT.</returns>
     [AllowAnonymous]
     [HttpPost("sign-in")]
     [SwaggerOperation(
@@ -131,11 +115,7 @@ public class AuthenticationController(
         return Ok(AuthenticatedUserAssembler.ToResourceFrom(user, token));
     }
 
-    /// <summary>
-    ///     Signs out the currently authenticated user and records <c>UserSignedOutEvent</c> (AU-007).
-    /// </summary>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns><c>204 No Content</c> on success, or an RFC 7807 Problem Details error.</returns>
+    /// <summary>Signs out the authenticated user and records a sign-out event.</summary>
     [Authorize]
     [HttpPost("sign-out")]
     [SwaggerOperation(

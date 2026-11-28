@@ -7,24 +7,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Agridron.Backend.API.IAM.Infrastructure.Email.Brevo.Services;
 
-/// <summary>
-///     Native <see cref="IHttpClientFactory" /> adapter for sending transactional verification emails via Brevo REST API v3.
-/// </summary>
-/// <remarks>
-///     Design Pattern: Strategy — concrete transactional email delivery strategy consuming Brevo's
-///     <c>POST /v3/smtp/email</c> endpoint without introducing external third-party SDK dependencies.
-/// </remarks>
+/// <summary>HTTP client adapter for Brevo transactional email delivery.</summary>
 internal sealed class BrevoEmailService(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
     ILogger<BrevoEmailService> logger) : IBrevoEmailService
 {
-    /// <summary>Named <see cref="HttpClient" /> identifier registered in DI.</summary>
     public const string HttpClientName = "Brevo";
 
     private const string DefaultFrontendBaseUrl = "http://localhost:5173";
 
-    /// <inheritdoc />
     public async Task SendWelcomeEmailAsync(
         string toEmail,
         string fullName,
@@ -90,13 +82,6 @@ internal sealed class BrevoEmailService(
         logger.LogInformation("Welcome verification email accepted by Brevo (status {StatusCode}).", (int)response.StatusCode);
     }
 
-    /// <summary>
-    ///     Builds an email-client-compatible inline-styled HTML welcome and verification message.
-    /// </summary>
-    /// <param name="fullName">The user's display name.</param>
-    /// <param name="role">The user's assigned role name.</param>
-    /// <param name="verificationUrl">The absolute verification link containing the single-use token.</param>
-    /// <returns>The rendered HTML document string.</returns>
     internal static string BuildWelcomeEmailHtml(string fullName, string role, string verificationUrl)
     {
         var encodedName = WebUtility.HtmlEncode(fullName);
@@ -116,7 +101,6 @@ internal sealed class BrevoEmailService(
                 <tr>
                   <td align="center">
                     <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);">
-                      <!-- Header -->
                       <tr>
                         <td style="background-color: #14532d; background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 32px 36px; text-align: center;">
                           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -138,7 +122,6 @@ internal sealed class BrevoEmailService(
                         </td>
                       </tr>
 
-                      <!-- Body -->
                       <tr>
                         <td style="padding: 36px 36px 28px 36px;">
                           <h2 style="margin: 0 0 12px 0; color: #111827; font-size: 20px; font-weight: 700;">
@@ -162,7 +145,6 @@ internal sealed class BrevoEmailService(
                             Para confirmar la titularidad de tu correo electrónico y activar todas las funciones de gestión de fundos, parcelas y misiones de fumigación, haz clic en el siguiente botón:
                           </p>
 
-                          <!-- Primary CTA Button -->
                           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 28px 0;">
                             <tr>
                               <td align="center">
@@ -174,7 +156,6 @@ internal sealed class BrevoEmailService(
                             </tr>
                           </table>
 
-                          <!-- Plain-text fallback link -->
                           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
                             <tr>
                               <td style="padding: 14px 16px;">
@@ -188,14 +169,12 @@ internal sealed class BrevoEmailService(
                             </tr>
                           </table>
 
-                          <!-- Security Notice -->
                           <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
                             <strong>Nota de seguridad:</strong> Este enlace es personal y de un solo uso. Si no creaste una cuenta en AgriDron Solutions, puedes ignorar este mensaje de forma segura.
                           </p>
                         </td>
                       </tr>
 
-                      <!-- Footer -->
                       <tr>
                         <td style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 20px 36px; text-align: center;">
                           <p style="margin: 0 0 4px 0; color: #374151; font-size: 13px; font-weight: 600;">

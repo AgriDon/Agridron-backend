@@ -8,16 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Agridron.Backend.API.IAM.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 
-/// <summary>
-///     Entity Framework Core implementation of <see cref="IUserRepository" />.
-/// </summary>
-/// <remarks>
-///     Design Pattern: Repository — encapsulates EF Core queries over <see cref="AppDbContext" /> for
-///     <see cref="User" /> aggregates while coordinating transactional writes through <c>IUnitOfWork</c>.
-/// </remarks>
 internal sealed class UserRepository(AppDbContext context) : BaseRepository<User>(context), IUserRepository
 {
-    /// <inheritdoc />
     public async Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         EmailAddress normalizedEmail;
@@ -34,7 +26,6 @@ internal sealed class UserRepository(AppDbContext context) : BaseRepository<User
             .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
     }
 
-    /// <inheritdoc />
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         EmailAddress normalizedEmail;
@@ -51,7 +42,6 @@ internal sealed class UserRepository(AppDbContext context) : BaseRepository<User
             .AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
     }
 
-    /// <inheritdoc />
     public async Task<User?> FindByVerificationTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(token))

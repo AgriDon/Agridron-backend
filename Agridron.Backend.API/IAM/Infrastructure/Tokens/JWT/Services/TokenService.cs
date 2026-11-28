@@ -11,19 +11,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Agridron.Backend.API.IAM.Infrastructure.Tokens.JWT.Services;
 
-/// <summary>
-///     JWT implementation of <see cref="ITokenService" /> using HMAC-SHA256 signing.
-/// </summary>
-/// <remarks>
-///     Design Pattern: Strategy — concrete stateless JWT issuance strategy reading signing settings from
-///     configuration/environment variables without hardcoding secrets.
-/// </remarks>
 internal sealed class TokenService(IConfiguration configuration) : ITokenService
 {
     private const int MinSecretLengthBytes = 32;
     private const int DefaultExpirationMinutes = 1440;
 
-    /// <inheritdoc />
     public string GenerateToken(User user)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -66,11 +58,6 @@ internal sealed class TokenService(IConfiguration configuration) : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    /// <summary>
-    ///     Resolves configuration values that reference <c>${ENV_VAR}</c> placeholders or OS environment variables.
-    /// </summary>
-    /// <param name="rawValue">The raw configuration value.</param>
-    /// <returns>The resolved non-empty secret value, or <c>null</c> if unset or unresolved.</returns>
     internal static string? ResolveSecret(string? rawValue)
     {
         if (string.IsNullOrWhiteSpace(rawValue))
