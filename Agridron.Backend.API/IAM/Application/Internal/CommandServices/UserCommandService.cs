@@ -89,6 +89,11 @@ internal sealed class UserCommandService(
             return Result<(User User, string Token)>.Failure(IamErrors.UserInactive);
         }
 
+        if (!user.EmailVerified)
+        {
+            return Result<(User User, string Token)>.Failure(IamErrors.EmailNotVerified);
+        }
+
         try
         {
             var token = tokenService.GenerateToken(user);
